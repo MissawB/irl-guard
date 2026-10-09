@@ -45,3 +45,11 @@ def test_reanalyse_forcee_apres_max_reutilisations():
     s = Sampler(30, 3, 6, max_reutilisations=2)
     resultats = [s.is_unchanged(_image()) for _ in range(7)]
     assert resultats == [False, True, True, False, True, True, False]
+
+
+def test_petit_texte_peu_contraste_en_4k():
+    s = Sampler(30, 3, 6, 5)
+    s.is_unchanged(_image(80, w=3840, h=2160))
+    avec_texte = _image(80, w=3840, h=2160)
+    cv2.putText(avec_texte, "06 12 34 56 78", (1800, 1080), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (128, 128, 128), 1)
+    assert s.is_unchanged(avec_texte) is False

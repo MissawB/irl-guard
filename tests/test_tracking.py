@@ -61,3 +61,9 @@ def test_les_copies_ne_modifient_pas_l_etat_interne():
     p = tm.update([_texte("Rue")])[0]
     p.texte = "modifié"
     assert tm.update([_texte("Rue")])[0].texte == "Rue"
+
+
+def test_texte_plein_integre_toujours_la_nouvelle_lecture():
+    plein = "a" * 200
+    assert fusionner_texte(plein, "06 12 34 56 78").endswith("06 12 34 56 78")
+    assert len(fusionner_texte(plein, "06 12 34 56 78")) == 200

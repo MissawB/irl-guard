@@ -47,3 +47,4 @@ def test_finaliser_sans_audio(make_video, tmp_path, caplog):
     assert sortie.exists() and a_une_piste_audio(sortie) is False
     assert _nb_images(sortie) == 20
     assert "sans piste audio" in caplog.text
+

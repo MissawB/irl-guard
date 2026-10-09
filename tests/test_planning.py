@@ -53,3 +53,12 @@ def test_pause_si_l_une_des_deux_analyses_est_en_pause():
 def test_sans_analyse():
     plan = planifier(0, None, None, 0.15, 100, 100)
     assert plan.masques == () and plan.pause is False and plan.analyse is None
+
+
+def test_changement_d_id_rapide_couvre_le_trajet():
+    # Mouvement rapide : ByteTrack perd la piste 1 (gardée perdue à sa vieille position) et ouvre la piste 2.
+    a = _a(10, [_p(1, Box(0, 100, 200, 140))])
+    perdue = PisteAnalysee(1, "texte", Box(0, 100, 200, 140), "Rue", "flouter", True)
+    b = _a(20, [perdue, _p(2, Box(400, 100, 600, 140))])
+    masques = planifier(15, a, b, 0.0, 1000, 1000).masques
+    assert Box(200, 100, 400, 140) in masques

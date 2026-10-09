@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import bisect
+import logging
 import tempfile
 import time
 from dataclasses import dataclass, replace
@@ -19,6 +20,8 @@ from irl_guard.planning import planifier
 from irl_guard.render import ecran_pause, rendre
 from irl_guard.sampling import Sampler
 from irl_guard.sources import VideoSource
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -43,7 +46,9 @@ def analyser_video(source: VideoSource, perception, analyzer: Analyzer, sampler:
                    journal: Journal) -> list[Analyse]:
     analyses: list[Analyse] = []
     derniere, detections_derniere = None, []
+    derniere_image = None
     for frame in source:
+        derniere_image = frame
         if not sampler.is_sample(frame.index):
             continue
         inchangee = sampler.is_unchanged(frame.image)
@@ -56,6 +61,12 @@ def analyser_video(source: VideoSource, perception, analyzer: Analyzer, sampler:
         journal.ecrire(analyse, detections)
         analyses.append(analyse)
         derniere, detections_derniere = analyse, detections
+    # Les images après la dernière analyse n'ont pas d'analyse suivante : on analyse toujours la dernière.
+    if derniere_image is not None and (derniere is None or derniere.frame_index != derniere_image.index):
+        detections = perception.detect(derniere_image.index, derniere_image.image)
+        analyse = analyzer.analyser(derniere_image.index, detections)
+        journal.ecrire(analyse, detections)
+        analyses.append(analyse)
     return analyses
 
 
@@ -98,6 +109,10 @@ def traiter_video(entree: str | Path, sortie: str | Path, cfg: SessionConfig, pe
     debut = time.perf_counter()
     with Journal(chemin_journal) as j:
         analyses = analyser_video(source, perception, analyzer, sampler, j)
+    if source.ecart_max_s > 1.5 / source.fps:
+        log.warning("Vidéo à fréquence d'images variable (écart de %.2f s) : la coupure audio des pauses "
+                    "peut être décalée. Convertis d'abord en fréquence fixe : "
+                    "ffmpeg -i entree.mp4 -fps_mode cfr -r 30 entree_cfr.mp4", source.ecart_max_s)
 
     sortie_debug = chemin_debug(sortie) if debug else None
     with tempfile.TemporaryDirectory() as tmp:

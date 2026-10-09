@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 
 import httpx
 
@@ -12,7 +13,8 @@ from irl_guard.decision.base import (
 )
 
 log = logging.getLogger(__name__)
-ERREURS_REPONSE = (KeyError, ValueError, TypeError)
+ERREURS_REPONSE = (KeyError, ValueError, TypeError, ArithmeticError)
+TOLERANCE_SOMME = 0.05
 
 
 class LayaIndisponible(RuntimeError):
@@ -24,6 +26,8 @@ def _probas(reponse: dict, options: tuple[str, ...]) -> dict[str, float]:
     probas = {o: float(brutes[o]) for o in options}
     if any(not 0.0 <= v <= 1.0 for v in probas.values()):
         raise ValueError(f"probabilité hors de [0, 1] : {probas}")
+    if abs(sum(probas.values()) - 1.0) > TOLERANCE_SOMME:
+        raise ValueError(f"probabilités dont la somme n'est pas 1 : {probas}")
     return probas
 
 
@@ -31,7 +35,7 @@ def _gravite(reponse: dict) -> int:
     score = reponse["score"]
     if isinstance(score, str) and score in NIVEAUX_GRAVITE:
         return NIVEAUX_GRAVITE.index(score)
-    if isinstance(score, (int, float)) and not isinstance(score, bool):
+    if isinstance(score, (int, float)) and not isinstance(score, bool) and math.isfinite(score):
         return min(max(int(score), 0), len(NIVEAUX_GRAVITE) - 1)
     raise ValueError(f"score de gravité inattendu : {score!r}")
 

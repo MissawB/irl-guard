@@ -23,7 +23,7 @@ def fusionner_texte(cumul: str, nouveau: str, max_len: int = TEXTE_MAX) -> str:
         return cumul
     if cumul.lower() in nouveau.lower():
         return nouveau[:max_len]
-    return f"{cumul} | {nouveau}"[:max_len]
+    return f"{cumul} | {nouveau}"[-max_len:]
 
 
 @dataclass

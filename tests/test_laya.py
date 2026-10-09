@@ -98,3 +98,15 @@ def test_verifier_leve_si_injoignable():
 
 def test_verifier_ok():
     _decider(lambda r: httpx.Response(200, json=_reponse())).verifier()
+
+
+def test_score_infini_donne_repli_sans_planter():
+    corps = json.dumps(_reponse()).replace('"score": 2', '"score": Infinity')
+    d = _decider(lambda r: httpx.Response(200, content=corps.encode(),
+                                          headers={"content-type": "application/json"})).decide(STATE)
+    assert d.source == "fallback"
+
+
+def test_probabilites_toutes_nulles_donnent_repli():
+    d = _decider(lambda r: httpx.Response(200, json=_reponse((0.0, 0.0, 0.0)))).decide(STATE)
+    assert (d.action, d.source) == ("flouter", "fallback")

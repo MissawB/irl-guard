@@ -87,3 +87,15 @@ def test_to_dict_serialisable():
     import json
     an, _ = _analyzer()
     json.dumps(an.analyser(0, [_texte()]).to_dict(), ensure_ascii=False)
+
+
+class DeciderQuiPlante:
+    def decide(self, state):
+        raise RuntimeError("bug inattendu")
+
+
+def test_exception_du_decideur_donne_repli():
+    an = Analyzer(SessionConfig(charte="x"), DeciderQuiPlante(), 1000, 1000)
+    a = an.analyser(0, [_texte()])
+    assert a.pistes[0].action == "flouter"
+    assert a.pistes[0].decision.source == "fallback"

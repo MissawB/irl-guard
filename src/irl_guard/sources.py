@@ -21,6 +21,8 @@ class VideoSource:
         self.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         cap.release()
+        # Plus grand écart entre l'horodatage réel d'une image et index / fps (vidéo à fréquence variable).
+        self.ecart_max_s = 0.0
 
     def __iter__(self) -> Iterator[Frame]:
         cap = cv2.VideoCapture(str(self.path))
@@ -30,6 +32,8 @@ class VideoSource:
                 ok, image = cap.read()
                 if not ok:
                     break
+                reel = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+                self.ecart_max_s = max(self.ecart_max_s, abs(reel - index / self.fps))
                 yield Frame(index, index / self.fps, image)
                 index += 1
         finally:

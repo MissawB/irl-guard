@@ -32,6 +32,13 @@ Fichiers produits :
 
 ⚠️ La vidéo de debug affiche le texte OCR en clair : elle sert à l'analyse, jamais à la diffusion.
 
+Les vidéos de téléphone sont souvent à fréquence d'images variable. Le masquage reste correct image par image, mais la coupure audio des pauses peut être décalée. Un avertissement le signale ; convertis alors d'abord la vidéo :
+
+```bash
+uv run python -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"   # chemin de ffmpeg
+<ffmpeg> -i clip.mp4 -fps_mode cfr -r 30 clip_cfr.mp4
+```
+
 ## Fonctionnement
 
 1. **Échantillonnage.** 3 images par seconde par défaut. Une image presque identique à la précédente réutilise son analyse.

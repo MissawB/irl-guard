@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from irl_guard.config import SessionConfig
-from irl_guard.decision.base import Decider, Decision
+from irl_guard.decision.base import Decider, Decision, decision_repli
 from irl_guard.state import construire_state
 from irl_guard.temporal import Hysteresis
 from irl_guard.tracking import Piste, TrackManager
 from irl_guard.types import CLASSE_NUDITE, CLASSES_CONTEXTE, CLASSES_REGLE, Box, Detection
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -83,7 +86,11 @@ class Analyzer:
         if cle in self._cache:
             return self._cache[cle]
         state = construire_state(piste, pistes, self.cfg, self.largeur, self.hauteur)
-        decision = self.decider.decide(state)
+        try:
+            decision = self.decider.decide(state)
+        except Exception as e:  # échec du côté sûr, quel que soit le décideur
+            log.warning("Décideur en erreur, piste floutée par défaut : %s", e)
+            decision = decision_repli()
         appels.append({"piste": piste.id, "state": state, "decision": decision.to_dict()})
         if decision.source != "fallback":
             self._cache[cle] = decision
