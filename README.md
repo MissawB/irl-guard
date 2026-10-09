@@ -62,3 +62,25 @@ uv run pytest -m "slow"       # test anti-fuite avec OCR réel
 - Pas de détection d'armes à feu (absentes de COCO), pas d'analyse audio.
 - L'OCR peine sur le texte stylisé ou flou.
 - Les décisions de Laya ne sont pas encore fine-tunées sur ce domaine.
+
+## Fine-tuning du decision model
+
+Laya sans fine-tuning ne suit pas une charte écrite (voir `docs/resultats/rapport.md`). Le fine-tuning lui apprend à le faire sur des chartes synthétiques.
+
+1. **Données** : chaque charte est composée de clauses structurées, rendues en français par des gabarits. Les labels se calculent de façon déterministe à partir des clauses. Le jeu « chartes non vues » utilise des formulations et des combinaisons de clauses absentes de l'entraînement.
+   ```bash
+   uv run irl-guard donnees generer
+   uv run hf auth login            # jeton en écriture, une seule fois
+   uv run irl-guard donnees publier
+   ```
+2. **Entraînement sur Colab** : ouvrir `notebooks/finetune_decision.ipynb` dans Colab, choisir un GPU T4, ajouter le secret `HF_TOKEN`, régler `MODELE = "qwen"` (puis `"laya"`) et tout exécuter. Si la session est coupée, relancer le notebook : il reprend au dernier checkpoint.
+3. **Récupérer les prédictions** :
+   ```bash
+   uv run hf download MissawB/irl-guard-decision-qwen predictions_test_vues.jsonl predictions_test_non_vues.jsonl --local-dir data/predictions/qwen-ft
+   uv run hf download MissawB/irl-guard-decision-laya predictions_test_vues.jsonl predictions_test_non_vues.jsonl --local-dir data/predictions/laya-ft
+   ```
+4. **Comparer** :
+   ```bash
+   uv run irl-guard evaluer
+   ```
+5. **Utiliser le modèle dans IRL Guard** : le servir avec Unsloth Studio (réglage Decision API, ou `UNSLOTH_SYSTEMONE_MODEL=<chemin du modèle fusionné> unsloth studio`), puis renseigner `laya.modele` dans la config.
