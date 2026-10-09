@@ -115,3 +115,28 @@ def replay(
         raise typer.Exit(1)
     cache = lire_detections(journal)
     _executer(entree, out, config, debug_overlay, decider, lambda cfg: CachedPerception(cache))
+
+
+@app.command()
+def evaluer(
+    donnees: Path = typer.Option(Path("data/decision"), "--donnees", exists=True, file_okay=False),
+    predictions: Path = typer.Option(Path("data/predictions"), "--predictions"),
+    approches: str = typer.Option("regles,xgboost,laya,laya-ft,qwen-ft", "--approches"),
+    config: Path = typer.Option(Path("configs/exemple.yaml"), "--config", exists=True, dir_okay=False),
+    sortie: Path = typer.Option(Path("docs/resultats"), "--sortie"),
+) -> None:
+    """Compare les approches sur les jeux de test et écrit le rapport."""
+    from irl_guard.donnees.lignes import lire_jeu
+    from irl_guard.evaluation.metriques import evaluer_predictions
+    from irl_guard.evaluation.rapport import JEUX_TEST, ecrire_rapport, obtenir_predictions
+
+    cfg = load_config(config)
+    jeux = {j: lire_jeu(donnees / f"{j}.jsonl") for j in JEUX_TEST}
+    resultats = {}
+    for approche in [a.strip() for a in approches.split(",") if a.strip()]:
+        typer.echo(f"Évaluation : {approche}")
+        par_jeu = obtenir_predictions(approche, cfg, donnees, predictions, jeux)
+        resultats[approche] = {
+            j: evaluer_predictions(jeux[j], p, cfg.seuils, cfg.evaluation.couts) if p is not None else None
+            for j, p in par_jeu.items()}
+    typer.echo(f"Rapport : {ecrire_rapport(resultats, sortie)}")

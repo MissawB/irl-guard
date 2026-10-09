@@ -1,0 +1,91 @@
+"""Prédictions par approche et rapport Markdown comparatif avec diagrammes de fiabilité."""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+from irl_guard.config import SessionConfig
+from irl_guard.decision.laya import LayaDecider, LayaIndisponible
+from irl_guard.decision.rules import RulesDecider
+from irl_guard.donnees.lignes import lire_jeu
+from irl_guard.evaluation.metriques import Resultat
+from irl_guard.evaluation.predicteurs import charger_predictions, predire_avec_decider
+from irl_guard.evaluation.xgb import PredicteurXGBoost
+
+log = logging.getLogger(__name__)
+APPROCHES = ("regles", "xgboost", "laya", "laya-ft", "qwen-ft")
+JEUX_TEST = ("test_vues", "test_non_vues")
+TITRES = {"test_vues": "Chartes vues", "test_non_vues": "Chartes non vues"}
+
+
+def obtenir_predictions(approche: str, cfg: SessionConfig, dossier_donnees: Path, dossier_predictions: Path,
+                        jeux: dict[str, list[dict]]) -> dict[str, dict | None]:
+    if approche == "regles":
+        decider = RulesDecider(cfg)
+        return {j: predire_avec_decider(decider, l) for j, l in jeux.items()}
+    if approche == "xgboost":
+        modele = PredicteurXGBoost().entrainer(lire_jeu(Path(dossier_donnees) / "train.jsonl"))
+        return {j: modele.predire(l) for j, l in jeux.items()}
+    if approche == "laya":
+        decider = LayaDecider(cfg)
+        try:
+            decider.verifier()
+        except LayaIndisponible as e:
+            log.warning("Laya absent du rapport : %s", e)
+            return {j: None for j in jeux}
+        return {j: predire_avec_decider(decider, l) for j, l in jeux.items()}
+    resultat = {}
+    for j in jeux:
+        chemin = Path(dossier_predictions) / approche / f"predictions_{j}.jsonl"
+        resultat[j] = charger_predictions(chemin) if chemin.exists() else None
+    return resultat
+
+
+def _pct(x: float) -> str:
+    return f"{100 * x:.1f} %"
+
+
+def _diagramme(resultats: dict[str, dict[str, Resultat | None]], jeu: str, chemin: Path) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.plot([0, 1], [0, 1], linestyle="--", color="grey", label="calibration parfaite")
+    for approche, par_jeu in resultats.items():
+        r = par_jeu.get(jeu)
+        if r is not None and r.fiabilite:
+            ax.plot([p[0] for p in r.fiabilite], [p[1] for p in r.fiabilite], marker="o", label=approche)
+    ax.set_xlabel("confiance moyenne")
+    ax.set_ylabel("précision observée")
+    ax.set_title(f"Fiabilité — {TITRES.get(jeu, jeu)}")
+    ax.legend(loc="lower right")
+    fig.savefig(chemin, dpi=120, bbox_inches="tight")
+    plt.close(fig)
+
+
+def ecrire_rapport(resultats: dict[str, dict[str, Resultat | None]], dossier: str | Path) -> Path:
+    dossier = Path(dossier)
+    dossier.mkdir(parents=True, exist_ok=True)
+    lignes = ["# Résultats du decision model", "",
+              "Taux de fuite : part des cas à protéger (flouter ou pause attendu) que l'approche diffuse.", ""]
+    jeux = sorted({j for par_jeu in resultats.values() for j in par_jeu}, key=lambda j: JEUX_TEST.index(j)
+                  if j in JEUX_TEST else len(JEUX_TEST))
+    for jeu in jeux:
+        lignes += [f"## {TITRES.get(jeu, jeu)}", "",
+                   "| Approche | n | Action | Risque | Gravité | Fuite | ECE | Coût moyen |",
+                   "|---|---|---|---|---|---|---|---|"]
+        for approche, par_jeu in resultats.items():
+            r = par_jeu.get(jeu)
+            if r is None:
+                lignes.append(f"| {approche} | absent | | | | | | |")
+            else:
+                lignes.append(f"| {approche} | {r.n} | {_pct(r.precision_action)} | {_pct(r.precision_risque)} | "
+                              f"{_pct(r.precision_gravite)} | {_pct(r.taux_fuite)} | {r.ece:.3f} | {r.cout_moyen:.2f} |")
+        image = dossier / f"fiabilite_{jeu}.png"
+        _diagramme(resultats, jeu, image)
+        lignes += ["", f"![Fiabilité — {TITRES.get(jeu, jeu)}]({image.name})", ""]
+    chemin = dossier / "rapport.md"
+    chemin.write_text("\n".join(lignes), encoding="utf-8")
+    return chemin
