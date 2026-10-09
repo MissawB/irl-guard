@@ -1,0 +1,53 @@
+[project]
+name = "irl-guard"
+version = "0.1.0"
+description = "Bloqueur de contenu pour lives IRL : YOLO + OCR + decision model"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python>=4.10",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "httpx>=0.27",
+    "typer>=0.12",
+    "supervision>=0.26",
+    "trackers>=2.6",
+    "imageio-ffmpeg>=0.5",
+    "torch>=2.5",
+    "torchvision>=0.20",
+    "ultralytics>=8.3",
+    "huggingface_hub>=0.24",
+    "rapidocr>=3.0",
+    "onnxruntime>=1.18",
+    "nudenet>=3.4",
+]
+
+[project.scripts]
+irl-guard = "irl_guard.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/irl_guard"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128" }]
+torchvision = [{ index = "pytorch-cu128" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "gpu: charge les vrais modèles (GPU conseillé, téléchargements)",
+    "slow: OCR réel sur vidéo, plusieurs dizaines de secondes",
+]
+addopts = "-m 'not gpu and not slow'"
