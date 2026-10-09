@@ -12,8 +12,8 @@ ECE : calibration de la question action (option la plus probable), sur 10 classe
 | regles | 1000 | 38.5 % | 0.331 | 80.4 % | 38.5 % | 23.7 % | 0.615 | 3.37 |
 | xgboost | 1000 | 60.3 % | 0.605 | 84.2 % | 63.7 % | 14.7 % | 0.034 | 1.96 |
 | laya | 1000 | 38.1 % | 0.303 | 27.6 % | 11.0 % | 36.2 % | 0.281 | 4.31 |
-| laya-ft | absent | | | | | | | |
-| qwen-ft | absent | | | | | | | |
+| laya-ft | 1000 | 91.2 % | 0.909 | 99.0 % | 92.2 % | 2.4 % | 0.078 | 0.34 |
+| qwen-ft | 1000 | 94.6 % | 0.945 | 99.6 % | 94.5 % | 1.8 % | 0.015 | 0.20 |
 
 ![Fiabilité — Chartes vues](fiabilite_test_vues.png)
 
@@ -25,7 +25,7 @@ ECE : calibration de la question action (option la plus probable), sur 10 classe
 | regles | 1000 | 42.9 % | 0.387 | 80.7 % | 42.9 % | 22.6 % | 0.571 | 3.33 |
 | xgboost | 1000 | 45.5 % | 0.424 | 86.0 % | 49.7 % | 40.1 % | 0.196 | 4.37 |
 | laya | 1000 | 35.9 % | 0.289 | 24.2 % | 10.3 % | 47.5 % | 0.293 | 5.35 |
-| laya-ft | absent | | | | | | | |
-| qwen-ft | absent | | | | | | | |
+| laya-ft | 1000 | 79.9 % | 0.783 | 98.9 % | 81.8 % | 14.7 % | 0.039 | 1.41 |
+| qwen-ft | 1000 | 84.6 % | 0.831 | 99.5 % | 84.8 % | 13.6 % | 0.067 | 1.19 |
 
 ![Fiabilité — Chartes non vues](fiabilite_test_non_vues.png)
