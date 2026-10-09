@@ -63,6 +63,19 @@ class DetecteursConfig(_Strict):
     device: str | None = None
 
 
+def _couts_par_defaut() -> dict[str, dict[str, float]]:
+    # couts[action prédite][action attendue]
+    return {
+        "diffuser": {"diffuser": 0, "flouter": 10, "pause": 20},
+        "flouter": {"diffuser": 1, "flouter": 0, "pause": 5},
+        "pause": {"diffuser": 3, "flouter": 1, "pause": 0},
+    }
+
+
+class EvaluationConfig(_Strict):
+    couts: dict[str, dict[str, float]] = Field(default_factory=_couts_par_defaut)
+
+
 class SessionConfig(_Strict):
     categorie: str = "IRL"
     charte: str
@@ -79,6 +92,7 @@ class SessionConfig(_Strict):
     laya: LayaConfig = Field(default_factory=LayaConfig)
     regles: ReglesConfig = Field(default_factory=ReglesConfig)
     detecteurs: DetecteursConfig = Field(default_factory=DetecteursConfig)
+    evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
 
 
 def load_config(path: str | Path) -> SessionConfig:
