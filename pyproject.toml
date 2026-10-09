@@ -20,6 +20,12 @@ dependencies = [
     "rapidocr>=3.0",
     "onnxruntime>=1.18",
     "nudenet>=3.4",
+    "faker>=30",
+    "scikit-learn>=1.5",
+    "xgboost>=2.1",
+    "matplotlib>=3.9",
+    "datasets>=3.0",
+    "nbformat>=5.10",
 ]
 
 [project.scripts]
