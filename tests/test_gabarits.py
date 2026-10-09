@@ -59,3 +59,22 @@ def test_test_utilise_au_moins_un_composant_reserve():
         sujet, verbe, prefixe = choisir_composants(clause, rng, train, test, "test")
         assert (sujet in test.sujets["propos"] or verbe in test.verbes["pause"]
                 or prefixe in test.prefixes["toujours"])
+
+
+def test_sujets_generiques_couvrent_toutes_les_cibles_du_risque():
+    # Un sujet précis (« les armes à feu ») étiquèterait « flouter » un couteau : seuls des sujets génériques.
+    specifiques = ("couteau", "ciseaux", "à feu", "blanches", "codes postaux", "numéros de maison", "noms de rue",
+                   "plaques de rue", "panneaux de rue", "e-mail", "téléphone", "noms des gens")
+    for sujets in SUJETS.values():
+        for sujet in sujets:
+            assert not any(s in sujet for s in specifiques), sujet
+
+
+def test_aucun_composant_n_est_sous_chaine_d_un_autre():
+    fragments = [s for t in SUJETS.values() for s in t]
+    fragments += [v.split("{")[0].strip().lower() for t in VERBES.values() for v in t if not v.startswith("{")]
+    fragments += [p.split("{")[0].strip().lower() for t in PREFIXES.values() for p in t if p]
+    for a in fragments:
+        for b in fragments:
+            if a != b:
+                assert a not in b, (a, b)

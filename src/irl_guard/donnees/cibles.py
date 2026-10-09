@@ -38,8 +38,9 @@ def _donnee_perso(rng: random.Random, faker: Faker) -> str:
     return rng.choice((faker.email, faker.phone_number, faker.name))()
 
 
-def tirer_cible(rng: random.Random, faker: Faker) -> CibleTiree:
-    risque = rng.choice(("localisation", "donnee_perso", "arme", "propos", "aucun"))
+def tirer_cible(rng: random.Random, faker: Faker, risque: str | None = None) -> CibleTiree:
+    if risque is None:
+        risque = rng.choice(("localisation", "donnee_perso", "arme", "propos", "aucun"))
     if risque == "arme":
         return CibleTiree(risque, "objet", None, rng.choice(("couteau", "ciseaux")))
     if risque == "localisation":

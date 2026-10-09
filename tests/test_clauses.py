@@ -57,3 +57,10 @@ def test_charte_valide():
     assert not charte_valide([ROUGE, Clause("localisation", "pause", "toujours")])  # même (risque, condition)
     assert not charte_valide([Clause(r, "flouter", t) for r in ("localisation", "arme", "propos")
                               for t in ("toujours", "domicile")])  # plus de 5 clauses
+
+
+def test_autorisation_seulement_inconditionnelle_et_sans_conflit():
+    assert charte_valide([Clause("arme", "diffuser", "toujours"), Clause("propos", "pause", "toujours")])
+    assert not charte_valide([Clause("arme", "diffuser", "sauf_categorie:cuisine"), ROUGE])
+    assert not charte_valide([Clause("arme", "diffuser", "domicile"), ROUGE])
+    assert not charte_valide([Clause("arme", "diffuser", "toujours"), Clause("arme", "flouter", "domicile")])

@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 
 from irl_guard.config import SeuilsConfig
-from irl_guard.decision.base import action_depuis_probas
+from irl_guard.decision.base import ACTIONS, NIVEAUX_GRAVITE, action_depuis_probas
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,7 @@ class Resultat:
     ece: float
     cout_moyen: float
     fiabilite: list[tuple[float, float, int]]
+    f1_macro_action: float = 0.0
 
 
 def _argmax(probas: dict[str, float]) -> str:
@@ -29,8 +30,28 @@ def action_predite(reponse: dict, seuils: SeuilsConfig) -> str:
     return action_depuis_probas(reponse["action"]["probabilities"], seuils.pause, seuils.flou)
 
 
+def _index_niveau(cle: str) -> int:
+    return NIVEAUX_GRAVITE.index(cle) if cle in NIVEAUX_GRAVITE else int(cle)
+
+
 def niveau_gravite(reponse: dict) -> int:
+    """Niveau le plus probable ; l'espérance (`score`) n'est qu'un repli : arrondie, elle tombe sur des
+    niveaux intermédiaires jamais attendus (0,6 sur 0 et 0,4 sur 3 donnent 1,2)."""
+    probas = reponse["gravite"].get("probabilities")
+    if probas:
+        return _index_niveau(_argmax(probas))
     return min(max(round(reponse["gravite"]["score"]), 0), 3)
+
+
+def f1_macro(attendues: list[str], predites: list[str]) -> float:
+    classes = [c for c in ACTIONS if c in attendues or c in predites]
+    scores = []
+    for c in classes:
+        vp = sum(a == c and p == c for a, p in zip(attendues, predites))
+        fp = sum(a != c and p == c for a, p in zip(attendues, predites))
+        fn = sum(a == c and p != c for a, p in zip(attendues, predites))
+        scores.append(2 * vp / (2 * vp + fp + fn) if vp else 0.0)
+    return sum(scores) / len(scores) if scores else 0.0
 
 
 def ece_et_fiabilite(confiances: list[float], corrects: list[bool],
@@ -58,12 +79,15 @@ def evaluer_predictions(lignes: list[dict], predictions: dict[str, dict], seuils
     ok_action = ok_risque = ok_gravite = a_proteger = fuites = 0
     cout = 0.0
     confiances, corrects = [], []
+    attendues, predites = [], []
     for ligne in lignes:
         gold = json.loads(ligne["gold"])
         reponse = predictions[ligne["id"]]
         attendue = gold["action"]["label"]
         predite = action_predite(reponse, seuils)
         ok_action += predite == attendue
+        attendues.append(attendue)
+        predites.append(predite)
         ok_risque += _argmax(reponse["risque"]["probabilities"]) == gold["risque"]["label"]
         ok_gravite += niveau_gravite(reponse) == int(gold["gravite"]["label"])
         if attendue != "diffuser":
@@ -76,4 +100,5 @@ def evaluer_predictions(lignes: list[dict], predictions: dict[str, dict], seuils
     n = len(lignes)
     ece, points = ece_et_fiabilite(confiances, corrects)
     return Resultat(n, ok_action / n, ok_risque / n, ok_gravite / n,
-                    fuites / a_proteger if a_proteger else 0.0, ece, cout / n, points)
+                    fuites / a_proteger if a_proteger else 0.0, ece, cout / n, points,
+                    f1_macro(attendues, predites))

@@ -96,3 +96,13 @@ def test_cli_generer(tmp_path):
                                      "--val", "1", "--test-vues", "1", "--test-non-vues", "2"])
     assert r.exit_code == 0, r.output
     assert len(lire_jeu(tmp_path / "d" / "test_non_vues.jsonl")) == 2
+
+
+def test_labels_equilibres():
+    jeu = generer_jeux(1, {"train": 1000, "val": 0, "test_vues": 0, "test_non_vues": 0})["train"]
+    actions = [json.loads(r["gold"])["action"]["label"] for r in jeu]
+    risques = [json.loads(r["gold"])["risque"]["label"] for r in jeu]
+    part = lambda liste, v: liste.count(v) / len(liste)
+    assert 0.35 <= part(actions, "diffuser") <= 0.55
+    assert part(actions, "flouter") >= 0.15 and part(actions, "pause") >= 0.15
+    assert 0.08 <= part(risques, "aucun") <= 0.20

@@ -121,7 +121,7 @@ def replay(
 def evaluer(
     donnees: Path = typer.Option(Path("data/decision"), "--donnees", exists=True, file_okay=False),
     predictions: Path = typer.Option(Path("data/predictions"), "--predictions"),
-    approches: str = typer.Option("regles,xgboost,laya,laya-ft,qwen-ft", "--approches"),
+    approches: str = typer.Option("toujours-diffuser,regles,xgboost,laya,laya-ft,qwen-ft", "--approches"),
     config: Path = typer.Option(Path("configs/exemple.yaml"), "--config", exists=True, dir_okay=False),
     sortie: Path = typer.Option(Path("docs/resultats"), "--sortie"),
 ) -> None:
@@ -136,7 +136,12 @@ def evaluer(
     for approche in [a.strip() for a in approches.split(",") if a.strip()]:
         typer.echo(f"Évaluation : {approche}")
         par_jeu = obtenir_predictions(approche, cfg, donnees, predictions, jeux)
-        resultats[approche] = {
-            j: evaluer_predictions(jeux[j], p, cfg.seuils, cfg.evaluation.couts) if p is not None else None
-            for j, p in par_jeu.items()}
+        resultats[approche] = {}
+        for j, p in par_jeu.items():
+            try:
+                resultats[approche][j] = (evaluer_predictions(jeux[j], p, cfg.seuils, cfg.evaluation.couts)
+                                          if p is not None else None)
+            except (ValueError, KeyError, TypeError) as e:  # fichier partiel ou mal formé : approche absente
+                typer.echo(f"  {approche} / {j} : prédictions inutilisables ({e}), marquée absente", err=True)
+                resultats[approche][j] = None
     typer.echo(f"Rapport : {ecrire_rapport(resultats, sortie)}")

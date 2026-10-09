@@ -10,10 +10,11 @@ from irl_guard.donnees.clauses import (
 from irl_guard.donnees.gabarits import Composants, choisir_composants, composer
 
 # Paires de signatures (risque, sanction, type_condition) réservées au test « chartes non vues ».
+# Les deux clauses de chaque paire sont protectrices : chacune peut changer un label.
 RESERVEES = (
-    (("arme", "diffuser", "toujours"), ("propos", "pause", "toujours")),
-    (("localisation", "pause", "domicile"), ("donnee_perso", "diffuser", "toujours")),
-    (("arme", "pause", "sauf_categorie"), ("localisation", "diffuser", "toujours")),
+    (("arme", "pause", "toujours"), ("propos", "flouter", "domicile")),
+    (("localisation", "pause", "domicile"), ("donnee_perso", "flouter", "sauf_categorie")),
+    (("arme", "flouter", "sauf_categorie"), ("localisation", "pause", "toujours")),
 )
 PREAMBULES = ("", "Live tout public.", "Ambiance détendue.", "Merci de respecter ces règles.", "Règles du stream :")
 
@@ -30,7 +31,9 @@ def _clause(risque: str, sanction: str, type_condition: str, rng: random.Random)
 
 
 def _clause_aleatoire(rng: random.Random) -> Clause:
-    return _clause(rng.choice(RISQUES_CHARTE), rng.choice(SANCTIONS), rng.choice(TYPES_CONDITION), rng)
+    sanction = rng.choice(SANCTIONS)
+    type_condition = "toujours" if sanction == "diffuser" else rng.choice(TYPES_CONDITION)
+    return _clause(rng.choice(RISQUES_CHARTE), sanction, type_condition, rng)
 
 
 def tirer_clauses(rng: random.Random, reservee: bool) -> list[Clause]:
@@ -40,9 +43,11 @@ def tirer_clauses(rng: random.Random, reservee: bool) -> list[Clause]:
         if reservee:
             a, b = rng.choice(RESERVEES)
             clauses = [_clause(*a, rng), _clause(*b, rng)]
-        while len(clauses) < n:
+        for _ in range(50):  # borne : une charte peut n'admettre aucune clause de plus (autorisations partout)
+            if len(clauses) >= n:
+                break
             candidate = _clause_aleatoire(rng)
-            if (candidate.risque, candidate.type_condition) not in {(c.risque, c.type_condition) for c in clauses}:
+            if not clauses or charte_valide([*clauses, candidate]):
                 clauses.append(candidate)
         rng.shuffle(clauses)
         if charte_valide(clauses) and contient_reservee(clauses) == reservee:

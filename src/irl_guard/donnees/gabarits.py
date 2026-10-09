@@ -15,20 +15,21 @@ from irl_guard.donnees.clauses import Clause
 
 PART_TEST = 0.3
 
+# Sujets génériques : chacun couvre toutes les cibles tirées pour son risque (cibles.py), sinon le label
+# contredirait le texte (« floute les armes à feu » ne dit rien d'un couteau).
 SUJETS = {
-    "localisation": ("les noms de rue", "les numéros de maison", "les adresses postales",
-                     "les panneaux de rue", "les codes postaux", "les plaques de rue"),
-    "donnee_perso": ("les adresses e-mail", "les numéros de téléphone", "les noms des gens",
-                     "les infos personnelles", "les coordonnées perso", "les données privées"),
-    "arme": ("les couteaux", "les armes à feu", "les lames", "les objets tranchants",
-             "les armes blanches", "les ciseaux"),
-    "propos": ("les insultes", "les gros mots", "les propos haineux", "les injures",
-               "les messages insultants", "les grossièretés"),
+    "localisation": ("les adresses", "les indications de lieu", "les repères géographiques",
+                     "les infos de localisation", "les éléments qui me localisent"),
+    "donnee_perso": ("les infos personnelles", "les données privées", "les coordonnées des gens",
+                     "les informations perso", "les éléments qui identifient quelqu'un"),
+    "arme": ("les armes", "les objets tranchants", "les objets dangereux", "les lames",
+             "les objets qui peuvent blesser"),
+    "propos": ("les insultes", "les gros mots", "les injures", "les grossièretés", "les propos insultants"),
 }
 
 VERBES = {
     "diffuser": ("Tu peux montrer {sujet}.", "Je n'ai aucun problème avec {sujet}.",
-                 "{Sujet} : c'est autorisé.", "Pas besoin de cacher {sujet}.", "Laisse passer {sujet}."),
+                 "{Sujet} : c'est autorisé.", "Aucune raison de dissimuler {sujet}.", "Laisse passer {sujet}."),
     "flouter": ("Floute {sujet}.", "Cache {sujet} à l'écran.", "Masque {sujet}.",
                 "Je ne veux pas voir {sujet} en clair.", "{Sujet} : flou obligatoire."),
     "pause": ("Coupe le live si on voit {sujet}.", "{Sujet} : mets le stream en pause.",

@@ -11,7 +11,7 @@ from faker import Faker
 from irl_guard.decision.base import ACTIONS, QUESTIONS, RISQUES
 from irl_guard.donnees.chartes import rendre_charte, tirer_clauses
 from irl_guard.donnees.cibles import NEUTRES, bruiter, tirer_cible
-from irl_guard.donnees.clauses import appliquer_charte
+from irl_guard.donnees.clauses import RISQUES_CHARTE, appliquer_charte
 from irl_guard.donnees.gabarits import Composants, partitionner
 
 JEUX = ("train", "val", "test_vues", "test_non_vues")
@@ -21,6 +21,10 @@ TAILLES = ("petite", "moyenne", "grande")
 LISSAGE = 0.9
 GRAVITE_PAR_ACTION = {"diffuser": 0, "flouter": 2, "pause": 3}
 NIVEAUX = ("0", "1", "2", "3")
+# Équilibrage (revue finale C1) : sans lui, ~70 % des labels valaient « diffuser ».
+P_AUCUN = 0.12        # cible sans risque
+P_MENTIONNE = 0.75    # sinon, cible d'un risque cité par la charte
+P_REJET_DIFFUSER = 0.35
 
 
 def _distribution(options: tuple[str, ...], bonne: str) -> dict[str, float]:
@@ -53,11 +57,22 @@ def tirer_contexte(rng: random.Random) -> list[str]:
 
 def generer_ligne(id_: str, rng: random.Random, faker: Faker, train: Composants, test: Composants,
                   mode: str, reservee: bool) -> dict:
-    clauses = tirer_clauses(rng, reservee)
+    while True:
+        clauses = tirer_clauses(rng, reservee)
+        tirage = rng.random()
+        if tirage < P_AUCUN:
+            risque = "aucun"
+        elif tirage < P_AUCUN + (1 - P_AUCUN) * P_MENTIONNE:
+            risque = rng.choice([c.risque for c in clauses])
+        else:
+            risque = rng.choice(RISQUES_CHARTE)
+        categorie = rng.choice(CATEGORIES_STREAM)
+        mode_domicile = rng.random() < 1 / 3
+        action = appliquer_charte(clauses, risque, categorie, mode_domicile)
+        if action != "diffuser" or risque == "aucun" or rng.random() >= P_REJET_DIFFUSER:
+            break
     charte = rendre_charte(clauses, rng, train, test, mode)
-    cible = tirer_cible(rng, faker)
-    categorie = rng.choice(CATEGORIES_STREAM)
-    mode_domicile = rng.random() < 1 / 3
+    cible = tirer_cible(rng, faker, risque)
     texte = cible.texte
     if texte and rng.random() < 1 / 3:
         texte = bruiter(texte, rng)
@@ -72,7 +87,6 @@ def generer_ligne(id_: str, rng: random.Random, faker: Faker, train: Composants,
     state = {"categorie": categorie, "mode_domicile": mode_domicile, "charte": charte,
              "cible": description, "contexte": tirer_contexte(rng)}
 
-    action = appliquer_charte(clauses, cible.risque, categorie, mode_domicile)
     return {
         "id": id_,
         "state": json.dumps(state, ensure_ascii=False),

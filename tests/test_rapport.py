@@ -59,3 +59,50 @@ def test_cli_evaluer_regles_et_xgboost(tmp_path):
     assert r.exit_code == 0, r.output
     texte = (tmp_path / "resultats" / "rapport.md").read_text(encoding="utf-8")
     assert "| regles |" in texte and "| xgboost |" in texte and "absent" in texte
+
+
+def test_baseline_toujours_diffuser(tmp_path):
+    jeux = generer_jeux(0, PETIT)
+    preds = obtenir_predictions("toujours-diffuser", SessionConfig(charte="x"), tmp_path, tmp_path,
+                                {"test_vues": jeux["test_vues"]})
+    assert all(p["action"]["probabilities"]["diffuser"] == 1.0 for p in preds["test_vues"].values())
+
+
+def test_laya_avec_trop_de_replis_donne_absent(tmp_path, monkeypatch):
+    from irl_guard.decision.base import decision_repli
+    from irl_guard.evaluation import rapport
+
+    class LayaQuiDecroche:
+        def __init__(self, cfg):
+            pass
+
+        def verifier(self):
+            pass
+
+        def decide(self, state):
+            return decision_repli()
+
+    monkeypatch.setattr(rapport, "LayaDecider", LayaQuiDecroche)
+    jeux = generer_jeux(0, PETIT)
+    assert obtenir_predictions("laya", SessionConfig(charte="x"), tmp_path, tmp_path,
+                               {"test_vues": jeux["test_vues"]}) == {"test_vues": None}
+
+
+def test_fichier_de_predictions_incomplet_donne_absent(tmp_path):
+    from typer.testing import CliRunner
+
+    from irl_guard import cli
+    ecrire_jeux(generer_jeux(0, PETIT), tmp_path / "decision")
+    dossier = tmp_path / "predictions" / "qwen-ft"
+    dossier.mkdir(parents=True)
+    (dossier / "predictions_test_vues.jsonl").write_text(json.dumps({"id": "inconnu", "answers": {}}) + "\n",
+                                                         encoding="utf-8")
+    config = tmp_path / "s.yaml"
+    config.write_text("charte: x\n", encoding="utf-8")
+    r = CliRunner().invoke(cli.app, ["evaluer", "--donnees", str(tmp_path / "decision"),
+                                     "--predictions", str(tmp_path / "predictions"),
+                                     "--approches", "regles,qwen-ft", "--config", str(config),
+                                     "--sortie", str(tmp_path / "resultats")])
+    assert r.exit_code == 0, r.output
+    texte = (tmp_path / "resultats" / "rapport.md").read_text(encoding="utf-8")
+    assert "| qwen-ft | absent |" in texte

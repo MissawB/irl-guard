@@ -54,5 +54,14 @@ def appliquer_charte(clauses: list[Clause], risque: str, categorie: str, mode_do
 
 
 def charte_valide(clauses: list[Clause]) -> bool:
+    """2 à 5 clauses, une par (risque, condition). Une autorisation (diffuser) est inconditionnelle
+    et seule sur son risque : sinon le texte serait contradictoire (« tu peux montrer les armes.
+    En mode domicile, floute les armes. ») ou ambigu (« sauf en live cuisine, tu peux montrer… »)."""
     paires = [(c.risque, c.type_condition) for c in clauses]
-    return 2 <= len(clauses) <= 5 and len(paires) == len(set(paires))
+    if not (2 <= len(clauses) <= 5 and len(paires) == len(set(paires))):
+        return False
+    for c in clauses:
+        if c.sanction == "diffuser":
+            if c.type_condition != "toujours" or sum(d.risque == c.risque for d in clauses) > 1:
+                return False
+    return True

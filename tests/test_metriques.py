@@ -55,9 +55,16 @@ def test_evaluer_predictions():
     assert r.precision_gravite == 0.5
     assert r.taux_fuite == pytest.approx(1 / 3)  # 1 fuite sur 3 lignes à protéger
     assert r.cout_moyen == pytest.approx((0 + 20 + 3 + 0) / 4)
+    assert r.f1_macro_action == pytest.approx(1 / 3)  # flouter F1=1, pause 0, diffuser 0
 
 
 def test_prediction_manquante():
     with pytest.raises(ValueError, match="b"):
         evaluer_predictions([_ligne("a", "flouter", "arme"), _ligne("b", "pause", "arme")],
                             {"a": _rep((0, 1, 0), "arme", 2)}, CFG.seuils, CFG.evaluation.couts)
+
+
+def test_gravite_par_argmax_des_probabilites():
+    # Espérance 1.2 (niveau 1 jamais attendu) : l'argmax des probabilités donne le bon niveau 0.
+    assert niveau_gravite({"gravite": {"score": 1.2, "probabilities": {"0": 0.6, "1": 0, "2": 0, "3": 0.4}}}) == 0
+    assert niveau_gravite({"gravite": {"score": 2.0, "probabilities": {"aucune": 0.1, "critique": 0.9}}}) == 3

@@ -42,3 +42,8 @@ def test_rendu_contient_chaque_clause():
     assert "cuisine" in texte
     assert texte.count(".") >= 2
     assert texte == texte.strip() and "  " not in texte
+
+
+def test_paires_reservees_toutes_protectrices():
+    for a, b in RESERVEES:
+        assert a[1] != "diffuser" and b[1] != "diffuser"
