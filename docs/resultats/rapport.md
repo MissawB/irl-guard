@@ -1,27 +1,31 @@
 # Résultats du decision model
 
 Taux de fuite : part des cas à protéger (flouter ou pause attendu) que l'approche diffuse.
+« toujours-diffuser » est le plancher : une approche qui ne le dépasse pas n'a rien appris.
+ECE : calibration de la question action (option la plus probable), sur 10 classes de confiance.
 
 ## Chartes vues
 
-| Approche | n | Action | Risque | Gravité | Fuite | ECE | Coût moyen |
-|---|---|---|---|---|---|---|---|
-| regles | 1000 | 41.8 % | 83.0 % | 41.8 % | 22.1 % | 0.582 | 1.95 |
-| xgboost | 1000 | 71.4 % | 85.2 % | 47.1 % | 53.7 % | 0.060 | 2.70 |
-| laya | 1000 | 39.2 % | 25.2 % | 5.2 % | 37.4 % | 0.171 | 2.58 |
-| laya-ft | absent | | | | | | |
-| qwen-ft | absent | | | | | | |
+| Approche | n | Action | F1 macro | Risque | Gravité | Fuite | ECE | Coût moyen |
+|---|---|---|---|---|---|---|---|---|
+| toujours-diffuser | 1000 | 44.8 % | 0.206 | 12.6 % | 44.8 % | 100.0 % | 0.552 | 8.53 |
+| regles | 1000 | 38.5 % | 0.331 | 80.4 % | 38.5 % | 23.7 % | 0.615 | 3.37 |
+| xgboost | 1000 | 60.3 % | 0.605 | 84.2 % | 63.7 % | 14.7 % | 0.034 | 1.96 |
+| laya | 1000 | 38.1 % | 0.303 | 27.6 % | 11.0 % | 36.2 % | 0.281 | 4.31 |
+| laya-ft | absent | | | | | | | |
+| qwen-ft | absent | | | | | | | |
 
 ![Fiabilité — Chartes vues](fiabilite_test_vues.png)
 
 ## Chartes non vues
 
-| Approche | n | Action | Risque | Gravité | Fuite | ECE | Coût moyen |
-|---|---|---|---|---|---|---|---|
-| regles | 1000 | 40.7 % | 83.0 % | 40.7 % | 18.9 % | 0.593 | 2.01 |
-| xgboost | 1000 | 69.5 % | 83.6 % | 43.4 % | 62.2 % | 0.070 | 3.22 |
-| laya | 1000 | 44.7 % | 29.8 % | 5.2 % | 56.3 % | 0.128 | 3.35 |
-| laya-ft | absent | | | | | | |
-| qwen-ft | absent | | | | | | |
+| Approche | n | Action | F1 macro | Risque | Gravité | Fuite | ECE | Coût moyen |
+|---|---|---|---|---|---|---|---|---|
+| toujours-diffuser | 1000 | 43.4 % | 0.202 | 15.5 % | 43.4 % | 100.0 % | 0.566 | 8.93 |
+| regles | 1000 | 42.9 % | 0.387 | 80.7 % | 42.9 % | 22.6 % | 0.571 | 3.33 |
+| xgboost | 1000 | 45.5 % | 0.424 | 86.0 % | 49.7 % | 40.1 % | 0.196 | 4.37 |
+| laya | 1000 | 35.9 % | 0.289 | 24.2 % | 10.3 % | 47.5 % | 0.293 | 5.35 |
+| laya-ft | absent | | | | | | | |
+| qwen-ft | absent | | | | | | | |
 
 ![Fiabilité — Chartes non vues](fiabilite_test_non_vues.png)
