@@ -18,6 +18,35 @@ from irl_guard.perception.factory import construire_perception
 from irl_guard.pipeline import traiter_video
 
 app = typer.Typer(add_completion=False, help="Bloqueur de contenu pour lives IRL (V1 hors ligne).")
+donnees_app = typer.Typer(help="Données synthétiques pour fine-tuner le decision model.")
+app.add_typer(donnees_app, name="donnees")
+
+
+@donnees_app.command("generer")
+def donnees_generer(
+    sortie: Path = typer.Option(Path("data/decision"), "--sortie"),
+    graine: int = typer.Option(0, "--graine"),
+    train: int = typer.Option(4000, "--train"),
+    val: int = typer.Option(500, "--val"),
+    test_vues: int = typer.Option(1000, "--test-vues"),
+    test_non_vues: int = typer.Option(1000, "--test-non-vues"),
+) -> None:
+    """Génère les quatre jeux JSONL (train, val, test_vues, test_non_vues)."""
+    from irl_guard.donnees.lignes import ecrire_jeux, generer_jeux
+    jeux = generer_jeux(graine, {"train": train, "val": val, "test_vues": test_vues, "test_non_vues": test_non_vues})
+    for chemin in ecrire_jeux(jeux, sortie):
+        typer.echo(f"{chemin} : {len(jeux[chemin.stem])} lignes")
+
+
+@donnees_app.command("publier")
+def donnees_publier(
+    dossier: Path = typer.Option(Path("data/decision"), "--dossier", exists=True, file_okay=False),
+    repo: str = typer.Option("MissawB/irl-guard-decisions", "--repo"),
+) -> None:
+    """Publie les jeux en dataset privé sur le Hub (nécessite `hf auth login`)."""
+    from irl_guard.donnees.publication import publier
+    publier(dossier, repo)
+    typer.echo(f"Publié en privé : https://huggingface.co/datasets/{repo}")
 
 
 class ChoixDecider(str, Enum):
