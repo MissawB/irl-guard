@@ -1,0 +1,28 @@
+# Session IRL type. Toutes les clés absentes prennent leur valeur par défaut (voir src/irl_guard/config.py).
+categorie: IRL
+charte: >
+  Tout public. Ne jamais montrer de nom de rue ni de numéro près de mon domicile.
+  Armes réelles interdites. Pas d'insultes à l'écran.
+mode_domicile: false
+fps_analyse: 3
+masquage: pixel          # pixel (plus sûr) ou flou
+marge: 0.15
+maintien: 3
+couper_audio_en_pause: true
+
+seuils:
+  pause: 0.5
+  flou: 0.4
+  hysteresis_haut: 0.7
+  hysteresis_bas: 0.3
+  sortie_k: 3
+  nudite: 0.6
+
+laya:
+  url: http://localhost:8888
+  modele: laya-multilingual
+  timeout_s: 5
+
+regles:
+  categories_couteau_ok: [cuisine]
+  mots_offensants: []
