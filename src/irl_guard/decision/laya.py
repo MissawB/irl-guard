@@ -15,6 +15,8 @@ from irl_guard.decision.base import (
 log = logging.getLogger(__name__)
 ERREURS_REPONSE = (KeyError, ValueError, TypeError, ArithmeticError)
 TOLERANCE_SOMME = 0.05
+# Le premier appel charge le modèle (10 à 20 s d'après Unsloth) : la vérification attend plus longtemps.
+TIMEOUT_VERIFICATION_S = 60.0
 
 
 class LayaIndisponible(RuntimeError):
@@ -36,7 +38,7 @@ def _gravite(reponse: dict) -> int:
     if isinstance(score, str) and score in NIVEAUX_GRAVITE:
         return NIVEAUX_GRAVITE.index(score)
     if isinstance(score, (int, float)) and not isinstance(score, bool) and math.isfinite(score):
-        return min(max(int(score), 0), len(NIVEAUX_GRAVITE) - 1)
+        return min(max(round(score), 0), len(NIVEAUX_GRAVITE) - 1)
     raise ValueError(f"score de gravité inattendu : {score!r}")
 
 
@@ -61,9 +63,10 @@ class LayaDecider:
         self._client = httpx.Client(base_url=laya.url, timeout=laya.timeout_s,
                                     headers=en_tetes, transport=transport)
 
-    def _appeler(self, state: dict) -> Decision:
+    def _appeler(self, state: dict, timeout: float | None = None) -> Decision:
         corps = {"model": self.cfg.laya.modele, "state": state, "questions": QUESTIONS}
-        reponse = self._client.post("/v1/systemone", json=corps)
+        options = {} if timeout is None else {"timeout": timeout}
+        reponse = self._client.post("/v1/systemone", json=corps, **options)
         reponse.raise_for_status()
         return parser_reponse(reponse.json(), self.cfg.seuils.pause, self.cfg.seuils.flou)
 
@@ -76,7 +79,7 @@ class LayaDecider:
 
     def verifier(self) -> None:
         try:
-            self._appeler({"cible": {"type": "texte", "texte": "test"}})
+            self._appeler({"cible": {"type": "texte", "texte": "test"}}, timeout=TIMEOUT_VERIFICATION_S)
         except (httpx.HTTPError, *ERREURS_REPONSE) as e:
             raise LayaIndisponible(
                 f"Laya injoignable ou réponse invalide sur {self.cfg.laya.url} : {e}. "

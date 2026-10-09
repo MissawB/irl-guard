@@ -110,3 +110,20 @@ def test_score_infini_donne_repli_sans_planter():
 def test_probabilites_toutes_nulles_donnent_repli():
     d = _decider(lambda r: httpx.Response(200, json=_reponse((0.0, 0.0, 0.0)))).decide(STATE)
     assert (d.action, d.source) == ("flouter", "fallback")
+
+
+def test_gravite_decimale_arrondie():
+    # Laya renvoie l'espérance du niveau (ex. 1.767), pas un entier.
+    assert _decider(lambda r: httpx.Response(200, json=_reponse(score=1.767))).decide(STATE).gravite == 2
+    assert _decider(lambda r: httpx.Response(200, json=_reponse(score=1.2))).decide(STATE).gravite == 1
+
+
+def test_verifier_laisse_le_temps_de_charger_le_modele():
+    delais = []
+
+    def handler(request):
+        delais.append(request.extensions["timeout"]["read"])
+        return httpx.Response(200, json=_reponse())
+
+    _decider(handler, timeout_s=5).verifier()
+    assert delais == [60.0]
