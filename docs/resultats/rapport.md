@@ -33,3 +33,18 @@ ECE : calibration de la question action (option la plus probable), sur 10 classe
 | combine-qwen | 1000 | 69.7 % | 0.697 | 99.8 % | 69.9 % | 3.7 % | 0.238 | 0.73 |
 
 ![Fiabilité — Chartes non vues](fiabilite_test_non_vues.png)
+
+## Chartes écrites à la main
+
+| Approche | n | Action | F1 macro | Risque | Gravité | Fuite | ECE | Coût moyen |
+|---|---|---|---|---|---|---|---|---|
+| toujours-diffuser | 1000 | 36.9 % | 0.180 | 13.7 % | 36.9 % | 100.0 % | 0.631 | 8.31 |
+| regles | 1000 | 53.1 % | 0.462 | 82.4 % | 53.1 % | 20.4 % | 0.469 | 2.52 |
+| xgboost | 1000 | 42.7 % | 0.320 | 86.0 % | 43.6 % | 68.8 % | 0.391 | 6.22 |
+| laya | 1000 | 40.5 % | 0.295 | 24.8 % | 12.4 % | 44.7 % | 0.274 | 4.58 |
+| laya-ft | 1000 | 56.4 % | 0.548 | 98.9 % | 48.9 % | 55.5 % | 0.239 | 4.42 |
+| qwen-ft | 1000 | 59.9 % | 0.589 | 99.2 % | 54.2 % | 56.7 % | 0.285 | 4.43 |
+| combine-laya | 1000 | 63.1 % | 0.622 | 99.2 % | 56.4 % | 11.3 % | 0.286 | 1.46 |
+| combine-qwen | 1000 | 64.5 % | 0.639 | 99.4 % | 58.7 % | 10.9 % | 0.306 | 1.41 |
+
+![Fiabilité — Chartes écrites à la main](fiabilite_test_manuscrites.png)
