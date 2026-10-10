@@ -67,7 +67,6 @@ def publier(api, construits: dict[str, Path], public: bool) -> list[str]:
                     space_hardware="zero-a10g")  # sur CPU gratuit, un compte non PRO reçoit une 402
     api.upload_folder(folder_path=str(construits[SPACE]), repo_id=SPACE, repo_type="space",
                       commit_message="Space IRL Guard")
-    api.request_space_hardware(SPACE, "zero-a10g")
     journal.append(f"Space déployé (ZeroGPU) : {SPACE}")
     if not public:
         journal.append("visibilité inchangée (relancer avec --public pour publier)")

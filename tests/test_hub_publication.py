@@ -59,7 +59,8 @@ def test_sans_public_rien_ne_devient_public(tmp_path):
     assert creation_space[2]["private"] is True
     # Un compte gratuit ne peut pas créer de Space Gradio sur CPU (402) : il est créé directement sur ZeroGPU.
     assert creation_space[2]["space_hardware"] == "zero-a10g"
-    assert ("request_space_hardware", (publication.SPACE, "zero-a10g"), {}) in api.appels
+    # request_space_hardware est refusé aux comptes gratuits : le matériel est fixé à la création.
+    assert "request_space_hardware" not in api.noms()
 
 
 def test_public_ne_touche_que_les_depots_listes(tmp_path):
