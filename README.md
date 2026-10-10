@@ -87,15 +87,25 @@ Laya sans fine-tuning ne suit pas une charte écrite (voir `docs/resultats/rappo
 
 ## Mode combiné et démo en ligne
 
-Par défaut, `irl-guard process` décide en **mode combiné** : les règles et Laya fine-tuné (chargé en local, sur
-CPU) donnent chacun leur décision, et la plus protectrice l'emporte. Pour utiliser Qwen fine-tuné via Unsloth
-Studio, régler `decideur.modele: studio` dans la config. Sur les chartes jamais vues, le mode combiné fait passer
-la fuite de 13,6 % (Qwen seul) à 3,7 %, au prix d'environ 15 points de précision (les règles ignorent la charte).
+Par défaut, `irl-guard process` décide en **mode combiné** : les règles et **Qwen3.5-2B fine-tuné (v2)**, chargé en
+local sans Unsloth (environ 0,15 s par décision sur une RTX 4060), donnent chacun leur décision, et la plus
+protectrice l'emporte. Sans GPU, régler `decideur.modele: laya-local` (Laya v2 sur CPU, moins précis).
 
-Au premier lancement, le mode combiné télécharge Laya fine-tuné (~680 Mo), à une version figée
-(`decideur.laya_revision`). Ensuite, il fonctionne hors ligne avec `HF_HUB_OFFLINE=1`. Sans connexion ni cache,
-`irl-guard process` s'arrête avec un message (relancer avec `--decider rules`).
+Sur 20 chartes **écrites à la main**, jamais vues à l'entraînement :
+
+| Approche | Précision | Fuite |
+|---|---|---|
+| Règles seules | 53,1 % | 20,4 % |
+| Qwen v1 (0.8B) | 59,9 % | 56,7 % |
+| Qwen v2 (2B, gabarits enrichis) | 79,1 % | 29,2 % |
+| **Règles + Qwen v2 (défaut)** | **71,9 %** | **5,5 %** |
+
+Au premier lancement, le modèle est téléchargé à une version figée (`decideur.qwen_revision`). Ensuite, il
+fonctionne hors ligne avec `HF_HUB_OFFLINE=1`. Sans connexion ni cache, `irl-guard process` s'arrête avec un
+message (relancer avec `--decider rules`).
 
 - Démo : https://huggingface.co/spaces/MissawB/irl-guard-demo
-- Collection « IRL Guard » (dataset et modèles) : https://huggingface.co/collections/MissawB/irl-guard-6ac9ea0b623e8e00170b6ffd
+- Collection « IRL Guard » (datasets et modèles v1 et v2) : https://huggingface.co/collections/MissawB/irl-guard-6ac9ea0b623e8e00170b6ffd
+- Fine-tuning local (sans Colab) : `~/.unsloth/studio/unsloth_studio/Scripts/python.exe scripts/finetune_local.py --modele laya --publier`
+- Prédictions locales d'un modèle fine-tuné : `uv run irl-guard predire --approche qwen-ft-v2 --jeu test_manuscrites`
 - Republier les fiches après une nouvelle évaluation : `uv run irl-guard hub publier`
