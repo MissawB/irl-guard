@@ -55,13 +55,13 @@ def test_carte_dataset():
 def test_cartes_modeles():
     tableaux = lire_tableaux(RAPPORT)
     qwen, laya = carte_qwen(tableaux), carte_laya(tableaux)
-    assert _frontmatter(qwen)["base_model"] == "unsloth/Qwen3.5-0.8B"
+    assert _frontmatter(qwen)["base_model"] == "unsloth/Qwen3.5-2B"
     assert _frontmatter(laya)["base_model"] == "convaiinnovations/laya-multilingual"
     for carte in (qwen, laya):
         meta = _frontmatter(carte)
-        assert meta["license"] == "apache-2.0" and meta["datasets"] == ["MissawB/irl-guard-decisions"]
+        assert meta["license"] == "apache-2.0" and meta["datasets"] == ["MissawB/irl-guard-decisions-v2"]
         assert "84.6 %" in carte and "| qwen-ft |" in carte
-    assert 'laya.load("MissawB/irl-guard-decision-laya")' in laya
+    assert 'laya.load("MissawB/irl-guard-decision-laya-v2")' in laya
     assert _frontmatter(carte_qwen_lora())["library_name"] == "peft"
 
 

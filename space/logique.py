@@ -11,8 +11,8 @@ from irl_guard.decision.combine import CombinedDecider
 from irl_guard.decision.laya import parser_reponse
 
 log = logging.getLogger(__name__)
-REPO_QWEN = "MissawB/irl-guard-decision-qwen"
-REPO_LAYA = "MissawB/irl-guard-decision-laya"
+REPO_QWEN = "MissawB/irl-guard-decision-qwen-v2"
+REPO_LAYA = "MissawB/irl-guard-decision-laya-v2"
 CHARTE_DEFAUT = ("Live tout public. Floute les insultes. En mode domicile, coupe le live si on voit les adresses. "
                  "Sauf en live cuisine, masque les objets tranchants.")
 EXEMPLES = [
@@ -73,7 +73,7 @@ class DeciderQwen:
 
     def __init__(self, cfg: SessionConfig, device: str = "cuda", repo: str = REPO_QWEN):
         from huggingface_hub import snapshot_download
-        chemin = snapshot_download(repo)
+        chemin = snapshot_download(repo, revision=cfg.decideur.qwen_revision)
         sys.path.insert(0, chemin)
         from joint_schema_model import load_release_model, systemone
         self._systemone = systemone

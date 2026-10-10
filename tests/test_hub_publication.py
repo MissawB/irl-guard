@@ -86,7 +86,7 @@ def test_cli_dry_run_sans_reseau(tmp_path, monkeypatch):
     r = CliRunner().invoke(cli.app, ["hub", "publier", "--dry-run", "--donnees", str(tmp_path / "d"),
                                      "--build", str(tmp_path / "build")])
     assert r.exit_code == 0, r.output
-    assert (tmp_path / "build" / "irl-guard-decision-laya" / "README.md").exists()
+    assert (tmp_path / "build" / "irl-guard-decision-laya-v2" / "README.md").exists()
 
 
 def test_dry_run_dans_une_console_windows_cp1252(tmp_path):
@@ -96,3 +96,9 @@ def test_dry_run_dans_une_console_windows_cp1252(tmp_path):
                         "--donnees", str(tmp_path / "d"), "--build", str(tmp_path / "build")],
                        capture_output=True, env={**os.environ, "PYTHONIOENCODING": "cp1252"})
     assert r.returncode == 0, r.stderr.decode("cp1252", "replace")[-500:]
+
+
+def test_depots_publies_en_v2():
+    depots = {r for r, _ in publication.DEPOTS_PUBLICS}
+    assert depots == {"MissawB/irl-guard-decisions-v2", "MissawB/irl-guard-decision-qwen-v2",
+                      "MissawB/irl-guard-decision-qwen-v2-lora", "MissawB/irl-guard-decision-laya-v2"}

@@ -10,10 +10,10 @@ from irl_guard.hub.cartes import (
 )
 
 DEPOTS_PUBLICS = [
-    ("MissawB/irl-guard-decisions", "dataset"),
-    ("MissawB/irl-guard-decision-qwen", "model"),
-    ("MissawB/irl-guard-decision-qwen-lora", "model"),
-    ("MissawB/irl-guard-decision-laya", "model"),
+    ("MissawB/irl-guard-decisions-v2", "dataset"),
+    ("MissawB/irl-guard-decision-qwen-v2", "model"),
+    ("MissawB/irl-guard-decision-qwen-v2-lora", "model"),
+    ("MissawB/irl-guard-decision-laya-v2", "model"),
 ]
 SPACE = "MissawB/irl-guard-demo"
 COLLECTION = "IRL Guard"
@@ -38,10 +38,10 @@ def construire(dossier_build: Path, rapport: Path, donnees: Path, source_space: 
                source_paquet: Path) -> dict[str, Path]:
     tableaux = lire_tableaux(Path(rapport).read_text(encoding="utf-8"))
     cartes = {
-        "MissawB/irl-guard-decisions": carte_dataset(stats_dataset(donnees)),
-        "MissawB/irl-guard-decision-qwen": carte_qwen(tableaux),
-        "MissawB/irl-guard-decision-qwen-lora": carte_qwen_lora(),
-        "MissawB/irl-guard-decision-laya": carte_laya(tableaux),
+        "MissawB/irl-guard-decisions-v2": carte_dataset(stats_dataset(donnees)),
+        "MissawB/irl-guard-decision-qwen-v2": carte_qwen(tableaux),
+        "MissawB/irl-guard-decision-qwen-v2-lora": carte_qwen_lora(),
+        "MissawB/irl-guard-decision-laya-v2": carte_laya(tableaux),
     }
     construits: dict[str, Path] = {}
     for repo, carte in cartes.items():

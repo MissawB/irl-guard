@@ -10,7 +10,9 @@ import yaml
 
 from irl_guard.donnees.lignes import JEUX, lire_jeu
 
-DATASET = "MissawB/irl-guard-decisions"
+DATASET = "MissawB/irl-guard-decisions-v2"
+QWEN = "MissawB/irl-guard-decision-qwen-v2"
+LAYA = "MissawB/irl-guard-decision-laya-v2"
 COLONNES = ("Approche", "Action", "F1 macro", "Fuite", "ECE", "Coût moyen")
 NOMS = {"toujours-diffuser": "Toujours diffuser (plancher)", "regles": "Règles", "xgboost": "XGBoost",
         "laya": "Laya brut", "laya-ft": "Laya fine-tuné", "qwen-ft": "Qwen3.5-0.8B fine-tuné",
@@ -21,8 +23,9 @@ LIMITES = """## Limites
 
 - Les chartes « non vues » sont des formulations et des combinaisons de clauses absentes de l'entraînement, mais
   écrites dans le même style de gabarits : une charte rédigée librement par un streamer sera plus difficile.
-- Seul, le modèle laisse passer environ 14 % des cas à protéger sur les chartes non vues : dans IRL Guard, il est
-  utilisé en **mode combiné** avec des règles déterministes (la décision la plus protectrice l'emporte).
+- Seul, Qwen v2 laisse passer 29 % des cas à protéger sur les chartes écrites à la main (2 % sur les chartes
+  synthétiques non vues) : dans IRL Guard, il est utilisé en **mode combiné** avec des règles déterministes (la
+  décision la plus protectrice l'emporte), ce qui ramène la fuite à 5,5 %.
 - Le modèle décide à partir d'un `state` JSON (texte lu par OCR, objet détecté, charte, contexte) : il ne voit pas
   l'image.
 """
@@ -108,8 +111,10 @@ combinaisons de clauses absentes de l'entraînement : il mesure si un modèle ap
 ## Projet
 
 Généré par `irl-guard donnees generer` (projet IRL Guard, bloqueur de contenu pour lives IRL). Modèles entraînés :
-[`MissawB/irl-guard-decision-qwen`](https://huggingface.co/MissawB/irl-guard-decision-qwen) et
-[`MissawB/irl-guard-decision-laya`](https://huggingface.co/MissawB/irl-guard-decision-laya).
+[`{QWEN}`](https://huggingface.co/{QWEN}) et [`{LAYA}`](https://huggingface.co/{LAYA}).
+
+Version 2 : environ 20 formulations par sanction et 8 préfixes par condition (5 et 4 en v1), sans reprendre
+aucune expression des 20 chartes écrites à la main qui servent de test final.
 """
 
 
@@ -148,12 +153,13 @@ ou chargé avec `transformers` grâce au fichier `joint_schema_model.py` du dép
 
 ```python
 from joint_schema_model import load_release_model, systemone
-model, processor = load_release_model("MissawB/irl-guard-decision-qwen", device="cuda")
+model, processor = load_release_model("MissawB/irl-guard-decision-qwen-v2", device="cuda")
 reponse = systemone(model, processor, {"model": "irl-guard", "state": state, "questions": questions})
 ```
 
-Dans IRL Guard : `decideur.modele: studio` puis `irl-guard process clip.mp4 --decider combine`."""
-    return _carte_modele("unsloth/Qwen3.5-0.8B", "IRL Guard — decision model (Qwen3.5-0.8B fine-tuné)",
+C'est le modèle par défaut d'IRL Guard (`--decider combine`, `decideur.modele: qwen-local`), chargé ainsi
+sans Unsloth, sur GPU (environ 0,15 s par décision sur une RTX 4060)."""
+    return _carte_modele("unsloth/Qwen3.5-2B", "IRL Guard — decision model v2 (Qwen3.5-2B fine-tuné)",
                          usage, tableaux, "unsloth")
 
 
@@ -162,21 +168,21 @@ def carte_laya(tableaux: dict) -> str:
 
 ```python
 import laya
-agent = laya.load("MissawB/irl-guard-decision-laya")
+agent = laya.load("MissawB/irl-guard-decision-laya-v2")
 reponse = agent.predict(state, questions)
 ```
 
-C'est le modèle par défaut d'IRL Guard (`--decider combine`, `decideur.modele: laya-local`)."""
-    return _carte_modele("convaiinnovations/laya-multilingual", "IRL Guard — decision model (Laya fine-tuné)",
+Alternative légère d'IRL Guard sans GPU (`decideur.modele: laya-local`). Moins précis que Qwen v2 sur les chartes
+écrites librement."""
+    return _carte_modele("convaiinnovations/laya-multilingual", "IRL Guard — decision model v2 (Laya fine-tuné)",
                          usage, tableaux, "laya")
 
 
 def carte_qwen_lora() -> str:
-    meta = {"license": "apache-2.0", "base_model": "unsloth/Qwen3.5-0.8B", "datasets": [DATASET],
+    meta = {"license": "apache-2.0", "base_model": "unsloth/Qwen3.5-2B", "datasets": [DATASET],
             "library_name": "peft", "tags": ["lora", "irl-guard"]}
-    return _frontmatter(meta) + """# IRL Guard — adaptateurs LoRA (Qwen3.5-0.8B)
+    return _frontmatter(meta) + f"""# IRL Guard — adaptateurs LoRA v2 (Qwen3.5-2B)
 
-Adaptateurs LoRA et tête de décision du modèle
-[`MissawB/irl-guard-decision-qwen`](https://huggingface.co/MissawB/irl-guard-decision-qwen). Pour l'inférence,
+Adaptateurs LoRA et tête de décision du modèle [`{QWEN}`](https://huggingface.co/{QWEN}). Pour l'inférence,
 utilisez plutôt le modèle fusionné ; résultats et limites sur sa fiche.
 """

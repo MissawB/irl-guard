@@ -64,10 +64,12 @@ class DetecteursConfig(_Strict):
 
 
 class DecideurConfig(_Strict):
-    modele: Literal["laya-local", "studio"] = "laya-local"
-    laya_local: str = "MissawB/irl-guard-decision-laya"
-    # Version figée : un envoi erroné sur le dépôt ne doit pas changer en silence le comportement du bloqueur.
-    laya_revision: str | None = "b7a9c6eaecd86782bcc101b27525041cbb662161"
+    modele: Literal["qwen-local", "laya-local", "studio"] = "qwen-local"
+    # Versions figées : un envoi erroné sur un dépôt ne doit pas changer en silence le comportement du bloqueur.
+    qwen_local: str = "MissawB/irl-guard-decision-qwen-v2"
+    qwen_revision: str | None = "847f5864d96751194da02aaf55fc5ec7dfd53cfe"
+    laya_local: str = "MissawB/irl-guard-decision-laya-v2"
+    laya_revision: str | None = "b06d028d8b1dfc530d534061b30d943d705bfa61"
 
 
 def _couts_par_defaut() -> dict[str, dict[str, float]]:

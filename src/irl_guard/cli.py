@@ -82,6 +82,7 @@ class ChoixDecider(str, Enum):
     rules = "rules"
     laya = "laya"
     laya_local = "laya-local"
+    qwen_local = "qwen-local"
     combine = "combine"
 
 
@@ -96,7 +97,13 @@ def creer_decider(choix: ChoixDecider, cfg: SessionConfig) -> Decider:
         decider = LayaLocalDecider(cfg, cfg.decideur.laya_local, revision=cfg.decideur.laya_revision)
         decider.verifier()
         return decider
-    modele = ChoixDecider.laya if cfg.decideur.modele == "studio" else ChoixDecider.laya_local
+    if choix == ChoixDecider.qwen_local:
+        from irl_guard.decision.qwen_local import QwenLocalDecider
+        decider = QwenLocalDecider(cfg, repo=cfg.decideur.qwen_local, revision=cfg.decideur.qwen_revision)
+        decider.verifier()
+        return decider
+    modele = {"studio": ChoixDecider.laya, "laya-local": ChoixDecider.laya_local,
+              "qwen-local": ChoixDecider.qwen_local}[cfg.decideur.modele]
     return CombinedDecider(RulesDecider(cfg), creer_decider(modele, cfg))
 
 
@@ -190,8 +197,9 @@ def creer_decider_modele(approche: str, cfg: SessionConfig) -> Decider:
     from irl_guard.decision.qwen_local import REPO_QWEN, QwenLocalDecider
     base, _, version = approche.partition("-ft")
     version = version.lstrip("-")  # "" pour v1, "v2" pour « laya-ft-v2 »
-    if base == "laya" and not version:
-        return LayaLocalDecider(cfg, cfg.decideur.laya_local, revision=cfg.decideur.laya_revision)
+    if base == "laya" and not version:  # v1 publiée, version figée (la config pointe désormais vers la v2)
+        return LayaLocalDecider(cfg, "MissawB/irl-guard-decision-laya",
+                                revision="b7a9c6eaecd86782bcc101b27525041cbb662161")
     if base == "laya":
         return LayaLocalDecider(cfg, f"MissawB/irl-guard-decision-laya-{version}")
     if base == "qwen":

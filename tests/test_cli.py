@@ -85,8 +85,9 @@ class FauxAgentLaya:
 def test_combine_est_le_defaut_et_garde_la_regle(make_video, tmp_path, monkeypatch):
     import json
 
-    from irl_guard.decision import laya_local
-    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele, revision=None: FauxAgentLaya())
+    from irl_guard.decision import qwen_local
+    monkeypatch.setattr(qwen_local, "_charger_qwen",
+                        lambda repo, revision=None: lambda requete: FauxAgentLaya().predict(None, None))
     monkeypatch.setattr(cli, "construire_perception", lambda cfg: TexteFixe())
     entree = make_video(n=10, fps=10.0, size=(640, 240), draw=_dessiner)
     r = runner.invoke(cli.app, ["process", str(entree), "--config", str(_config(tmp_path)),
@@ -110,7 +111,22 @@ def test_laya_local_seul(make_video, tmp_path, monkeypatch):
 
 
 def test_config_decideur_par_defaut():
+    import re
+
     from irl_guard.config import SessionConfig
     cfg = SessionConfig(charte="x")
-    assert cfg.decideur.modele == "laya-local"
-    assert cfg.decideur.laya_local == "MissawB/irl-guard-decision-laya"
+    assert cfg.decideur.modele == "qwen-local"
+    assert cfg.decideur.qwen_local == "MissawB/irl-guard-decision-qwen-v2"
+    assert re.fullmatch(r"[0-9a-f]{40}", cfg.decideur.qwen_revision)
+    assert cfg.decideur.laya_local == "MissawB/irl-guard-decision-laya-v2"
+
+
+def test_combine_avec_laya_local_par_la_config(make_video, tmp_path, monkeypatch):
+    from irl_guard.decision import laya_local
+    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele, revision=None: FauxAgentLaya())
+    monkeypatch.setattr(cli, "construire_perception", lambda cfg: TexteFixe())
+    entree = make_video(n=5, fps=10.0, size=(640, 240), draw=_dessiner)
+    r = runner.invoke(cli.app, ["process", str(entree), "--config",
+                                str(_config(tmp_path, decideur={"modele": "laya-local"})),
+                                "--out", str(tmp_path / "out.mp4")])
+    assert r.exit_code == 0, r.output

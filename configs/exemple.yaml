@@ -28,5 +28,4 @@ regles:
   mots_offensants: []
 
 decideur:
-  modele: laya-local          # laya-local (CPU, sans serveur) ou studio (Unsloth Studio, voir laya:)
-  laya_local: MissawB/irl-guard-decision-laya
+  modele: qwen-local          # qwen-local (Qwen v2, GPU conseillé), laya-local (CPU) ou studio (voir laya:)

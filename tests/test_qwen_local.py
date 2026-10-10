@@ -39,3 +39,24 @@ def test_creer_decider_modele_selon_la_version(monkeypatch):
     laya_v2 = cli.creer_decider_modele("laya-ft-v2", CFG)
     assert isinstance(laya_v2, laya_local.LayaLocalDecider) and laya_v2.modele == "MissawB/irl-guard-decision-laya-v2"
     assert cli.creer_decider_modele("laya-ft", CFG).modele == "MissawB/irl-guard-decision-laya"
+
+
+def test_version_figee_transmise_au_chargeur(monkeypatch):
+    from irl_guard.decision import qwen_local
+    appels = []
+    monkeypatch.setattr(qwen_local, "_charger_qwen",
+                        lambda repo, revision=None: appels.append((repo, revision)) or (lambda r: REPONSE))
+    QwenLocalDecider(CFG, repo="MissawB/q", revision="abc").decide(STATE)
+    assert appels == [("MissawB/q", "abc")]
+
+
+def test_verifier_leve_si_le_modele_ne_charge_pas():
+    import pytest
+
+    from irl_guard.decision.laya import LayaIndisponible
+
+    def chargeur():
+        raise OSError("pas de GPU")
+
+    with pytest.raises(LayaIndisponible, match="Qwen"):
+        QwenLocalDecider(CFG, chargeur=chargeur).verifier()
