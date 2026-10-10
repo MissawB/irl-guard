@@ -24,6 +24,31 @@ donnees_app = typer.Typer(help="Données synthétiques pour fine-tuner le decisi
 app.add_typer(donnees_app, name="donnees")
 
 
+hub_app = typer.Typer(help="Vitrine Hugging Face : fiches, Space et Collection.")
+app.add_typer(hub_app, name="hub")
+
+
+@hub_app.command("publier")
+def hub_publier(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Génère les fiches et le Space en local, sans réseau"),
+    public: bool = typer.Option(False, "--public", help="Rend publics le dataset, les modèles et le Space"),
+    rapport: Path = typer.Option(Path("docs/resultats/rapport.md"), "--rapport", exists=True, dir_okay=False),
+    donnees: Path = typer.Option(Path("data/decision"), "--donnees", exists=True, file_okay=False),
+    build: Path = typer.Option(Path("build/hub"), "--build"),
+) -> None:
+    """Prépare puis publie la vitrine IRL Guard sur Hugging Face."""
+    from irl_guard.hub import publication
+    construits = publication.construire(build, rapport, donnees, Path("space"), Path("src/irl_guard"))
+    for repo, chemin in construits.items():
+        typer.echo(f"{repo} → {chemin}")
+    if dry_run:
+        typer.echo("--dry-run : rien n'a été envoyé.")
+        return
+    from huggingface_hub import HfApi
+    for ligne in publication.publier(HfApi(), construits, public):
+        typer.echo(ligne)
+
+
 @donnees_app.command("generer")
 def donnees_generer(
     sortie: Path = typer.Option(Path("data/decision"), "--sortie"),
