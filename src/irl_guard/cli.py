@@ -40,7 +40,7 @@ def hub_publier(
     from irl_guard.hub import publication
     construits = publication.construire(build, rapport, donnees, Path("space"), Path("src/irl_guard"))
     for repo, chemin in construits.items():
-        typer.echo(f"{repo} → {chemin}")
+        typer.echo(f"{repo} -> {chemin}")
     if dry_run:
         typer.echo("--dry-run : rien n'a été envoyé.")
         return

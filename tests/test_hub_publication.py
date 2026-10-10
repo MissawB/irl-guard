@@ -84,3 +84,12 @@ def test_cli_dry_run_sans_reseau(tmp_path, monkeypatch):
                                      "--build", str(tmp_path / "build")])
     assert r.exit_code == 0, r.output
     assert (tmp_path / "build" / "irl-guard-decision-laya" / "README.md").exists()
+
+
+def test_dry_run_dans_une_console_windows_cp1252(tmp_path):
+    import os
+    ecrire_jeux(generer_jeux(0, {"train": 10, "val": 2, "test_vues": 2, "test_non_vues": 2}), tmp_path / "d")
+    r = subprocess.run([sys.executable, "-c", "from irl_guard.cli import app; app()", "hub", "publier", "--dry-run",
+                        "--donnees", str(tmp_path / "d"), "--build", str(tmp_path / "build")],
+                       capture_output=True, env={**os.environ, "PYTHONIOENCODING": "cp1252"})
+    assert r.returncode == 0, r.stderr.decode("cp1252", "replace")[-500:]
