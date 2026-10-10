@@ -26,6 +26,7 @@ dependencies = [
     "matplotlib>=3.9",
     "datasets>=3.0",
     "nbformat>=5.10",
+    "laya",
 ]
 
 [project.scripts]
