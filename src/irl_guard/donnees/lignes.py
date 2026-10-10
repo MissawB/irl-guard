@@ -131,3 +131,49 @@ def ecrire_jeux(jeux: dict[str, list[dict]], dossier: str | Path) -> list[Path]:
 def lire_jeu(chemin: str | Path) -> list[dict]:
     with Path(chemin).open(encoding="utf-8") as f:
         return [json.loads(ligne) for ligne in f if ligne.strip()]
+
+
+def generer_jeu_manuscrit(graine: int = 0, n: int = 1000) -> list[dict]:
+    """Jeu de test sur les 20 chartes écrites à la main (même tirage de cibles et de contexte que les autres)."""
+    from irl_guard.donnees.chartes_manuscrites import CHARTES
+    rng = random.Random(graine + 1_000_003)  # flux distinct des quatre jeux synthétiques
+    faker = Faker("fr_FR")
+    faker.seed_instance(graine + 1_000_003)
+    lignes = []
+    for i in range(n):
+        charte = CHARTES[i % len(CHARTES)]
+        clauses = list(charte.clauses)
+        while True:
+            tirage = rng.random()
+            if tirage < P_AUCUN:
+                risque = "aucun"
+            elif tirage < P_AUCUN + (1 - P_AUCUN) * P_MENTIONNE:
+                risque = rng.choice([c.risque for c in clauses])
+            else:
+                risque = rng.choice(RISQUES_CHARTE)
+            categorie = rng.choice(CATEGORIES_STREAM)
+            mode_domicile = rng.random() < 1 / 3
+            action = appliquer_charte(clauses, risque, categorie, mode_domicile)
+            if action != "diffuser" or risque == "aucun" or rng.random() >= P_REJET_DIFFUSER:
+                break
+        cible = tirer_cible(rng, faker, risque)
+        texte = cible.texte
+        if texte and rng.random() < 1 / 3:
+            texte = bruiter(texte, rng)
+        description: dict = {"type": cible.type}
+        if cible.classe:
+            description["classe"] = cible.classe
+        if texte:
+            description["texte"] = texte
+        description["conf"] = round(rng.uniform(0.5, 0.99), 2)
+        description["taille"] = rng.choice(TAILLES)
+        state = {"categorie": categorie, "mode_domicile": mode_domicile, "charte": charte.texte,
+                 "cible": description, "contexte": tirer_contexte(rng)}
+        lignes.append({
+            "id": f"test_manuscrites_{i:06d}",
+            "state": json.dumps(state, ensure_ascii=False),
+            "questions": json.dumps(QUESTIONS, ensure_ascii=False),
+            "gold": json.dumps(construire_gold(action, cible.risque), ensure_ascii=False),
+            "clauses": json.dumps([c.to_dict() for c in clauses], ensure_ascii=False),
+        })
+    return lignes

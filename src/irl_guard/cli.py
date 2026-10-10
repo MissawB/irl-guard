@@ -57,10 +57,12 @@ def donnees_generer(
     val: int = typer.Option(500, "--val"),
     test_vues: int = typer.Option(1000, "--test-vues"),
     test_non_vues: int = typer.Option(1000, "--test-non-vues"),
+    test_manuscrites: int = typer.Option(1000, "--test-manuscrites"),
 ) -> None:
-    """Génère les quatre jeux JSONL (train, val, test_vues, test_non_vues)."""
-    from irl_guard.donnees.lignes import ecrire_jeux, generer_jeux
+    """Génère les jeux JSONL (train, val, test_vues, test_non_vues, test_manuscrites)."""
+    from irl_guard.donnees.lignes import ecrire_jeux, generer_jeu_manuscrit, generer_jeux
     jeux = generer_jeux(graine, {"train": train, "val": val, "test_vues": test_vues, "test_non_vues": test_non_vues})
+    jeux["test_manuscrites"] = generer_jeu_manuscrit(graine, test_manuscrites)
     for chemin in ecrire_jeux(jeux, sortie):
         typer.echo(f"{chemin} : {len(jeux[chemin.stem])} lignes")
 
@@ -167,7 +169,7 @@ def evaluer(
     from irl_guard.evaluation.rapport import JEUX_TEST, ecrire_rapport, obtenir_predictions
 
     cfg = load_config(config)
-    jeux = {j: lire_jeu(donnees / f"{j}.jsonl") for j in JEUX_TEST}
+    jeux = {j: lire_jeu(donnees / f"{j}.jsonl") for j in JEUX_TEST if (donnees / f"{j}.jsonl").exists()}
     resultats = {}
     for approche in [a.strip() for a in approches.split(",") if a.strip()]:
         typer.echo(f"Évaluation : {approche}")
@@ -181,3 +183,37 @@ def evaluer(
                 typer.echo(f"  {approche} / {j} : prédictions inutilisables ({e}), marquée absente", err=True)
                 resultats[approche][j] = None
     typer.echo(f"Rapport : {ecrire_rapport(resultats, sortie)}")
+
+
+def creer_decider_modele(approche: str, cfg: SessionConfig) -> Decider:
+    """Décideur local d'un modèle fine-tuné, pour produire ses prédictions sans Colab."""
+    if approche == "laya-ft":
+        return LayaLocalDecider(cfg, cfg.decideur.laya_local, revision=cfg.decideur.laya_revision)
+    if approche == "qwen-ft":
+        from irl_guard.decision.qwen_local import QwenLocalDecider
+        return QwenLocalDecider(cfg)
+    raise typer.BadParameter(f"approche inconnue : {approche} (laya-ft ou qwen-ft)")
+
+
+@app.command()
+def predire(
+    approche: str = typer.Option(..., "--approche", help="laya-ft ou qwen-ft"),
+    jeu: str = typer.Option("test_manuscrites", "--jeu"),
+    donnees: Path = typer.Option(Path("data/decision"), "--donnees", exists=True, file_okay=False),
+    predictions: Path = typer.Option(Path("data/predictions"), "--predictions"),
+    config: Path = typer.Option(Path("configs/exemple.yaml"), "--config", exists=True, dir_okay=False),
+) -> None:
+    """Calcule en local les prédictions d'un modèle fine-tuné sur un jeu de test."""
+    import json
+
+    from irl_guard.donnees.lignes import lire_jeu
+    from irl_guard.evaluation.predicteurs import predire_avec_decider
+    cfg = load_config(config)
+    lignes = lire_jeu(donnees / f"{jeu}.jsonl")
+    resultats = predire_avec_decider(creer_decider_modele(approche, cfg), lignes)
+    sortie = predictions / approche / f"predictions_{jeu}.jsonl"
+    sortie.parent.mkdir(parents=True, exist_ok=True)
+    with sortie.open("w", encoding="utf-8") as f:
+        for id_, reponse in resultats.items():
+            f.write(json.dumps({"id": id_, "answers": reponse}, ensure_ascii=False) + "\n")
+    typer.echo(f"{len(resultats)} prédictions -> {sortie}")

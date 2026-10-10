@@ -162,3 +162,47 @@ def test_combine_avec_predictions_modele_incompletes(tmp_path):
                                      "--sortie", str(tmp_path / "resultats")])
     assert r.exit_code == 0, r.output
     assert "| combine-qwen | absent |" in (tmp_path / "resultats" / "rapport.md").read_text(encoding="utf-8")
+
+
+def test_cli_predire_ecrit_un_fichier_lisible(tmp_path, monkeypatch):
+    from typer.testing import CliRunner
+
+    from irl_guard import cli
+    from irl_guard.decision.base import Decision
+
+    class Fixe:
+        def decide(self, state):
+            return Decision("flouter", "propos", 2, {"action": {"diffuser": 0.1, "flouter": 0.8, "pause": 0.1}},
+                            "laya-local")
+
+    monkeypatch.setattr(cli, "creer_decider_modele", lambda approche, cfg: Fixe())
+    ecrire_jeux(generer_jeux(0, PETIT), tmp_path / "decision")
+    config = tmp_path / "s.yaml"
+    config.write_text("charte: x\n", encoding="utf-8")
+    r = CliRunner().invoke(cli.app, ["predire", "--approche", "laya-ft", "--jeu", "test_vues",
+                                     "--donnees", str(tmp_path / "decision"), "--predictions",
+                                     str(tmp_path / "predictions"), "--config", str(config)])
+    assert r.exit_code == 0, r.output
+    from irl_guard.evaluation.predicteurs import charger_predictions
+    preds = charger_predictions(tmp_path / "predictions" / "laya-ft" / "predictions_test_vues.jsonl")
+    assert len(preds) == 10
+    assert next(iter(preds.values()))["action"]["probabilities"]["flouter"] == 0.8
+
+
+def test_evaluer_ignore_un_jeu_absent(tmp_path):
+    from typer.testing import CliRunner
+
+    from irl_guard import cli
+    ecrire_jeux(generer_jeux(0, PETIT), tmp_path / "decision")  # pas de test_manuscrites.jsonl
+    config = tmp_path / "s.yaml"
+    config.write_text("charte: x\n", encoding="utf-8")
+    r = CliRunner().invoke(cli.app, ["evaluer", "--donnees", str(tmp_path / "decision"), "--predictions",
+                                     str(tmp_path / "predictions"), "--approches", "regles", "--config",
+                                     str(config), "--sortie", str(tmp_path / "resultats")])
+    assert r.exit_code == 0, r.output
+    assert "Chartes écrites à la main" not in (tmp_path / "resultats" / "rapport.md").read_text(encoding="utf-8")
+
+
+def test_titre_du_jeu_manuscrit():
+    from irl_guard.evaluation.rapport import JEUX_TEST, TITRES
+    assert "test_manuscrites" in JEUX_TEST and TITRES["test_manuscrites"] == "Chartes écrites à la main"
