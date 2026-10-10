@@ -56,5 +56,5 @@ def test_app_syntaxe_et_readme():
     readme = Path("space/README.md").read_text(encoding="utf-8")
     assert "sdk: gradio" in readme and "app_file: app.py" in readme
     exigences = Path("space/requirements.txt").read_text(encoding="utf-8")
-    for paquet in ("gradio", "spaces", "laya", "transformers", "pydantic"):
+    for paquet in ("gradio", "spaces", "laya", "transformers", "torchvision", "accelerate", "pydantic"):
         assert paquet in exigences

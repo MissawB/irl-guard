@@ -3,6 +3,7 @@ spaces
 laya
 transformers>=5
 torch
+torchvision
 safetensors
 accelerate
 huggingface_hub
