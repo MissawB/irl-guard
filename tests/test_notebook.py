@@ -48,3 +48,11 @@ def test_sauvegardes_isolees_par_modele():
     assert "shutil.rmtree" in texte
     assert '"lora"' not in texte and '"merged"' not in texte
     assert 'config["model_type"]' in texte
+
+
+def test_version_2_et_qwen_2b():
+    premiere = _code(construire_notebook())[0]
+    assert 'VERSION = "v2"' in premiere
+    assert '"unsloth/Qwen3.5-2B"' in premiere
+    assert 'REPO_DONNEES = f"MissawB/irl-guard-decisions-{VERSION}"' in premiere
+    assert 'REPO_MODELE = f"MissawB/irl-guard-decision-{MODELE}-{VERSION}"' in premiere

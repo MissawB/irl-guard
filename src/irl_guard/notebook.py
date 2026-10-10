@@ -20,10 +20,11 @@ et exporte les prédictions des deux jeux de test.
 **Avant de lancer :** Exécution → Modifier le type d'exécution → GPU T4, et ajouter le secret
 `HF_TOKEN` (jeton Hugging Face en écriture) dans le panneau 🔑 de Colab."""),
     ("code", """MODELE = "qwen"  # "qwen" ou "laya"
+VERSION = "v2"   # version du dataset et des modèles : un nouveau nom évite de reprendre un ancien entraînement
 MAX_STEPS = -1   # -1 = 2 époques complètes ; 60 pour un essai rapide
-REPO_DONNEES = "MissawB/irl-guard-decisions"
-REPO_MODELE = f"MissawB/irl-guard-decision-{MODELE}"
-BASES = {"qwen": "unsloth/Qwen3.5-0.8B", "laya": "convaiinnovations/laya-multilingual"}"""),
+REPO_DONNEES = f"MissawB/irl-guard-decisions-{VERSION}"
+REPO_MODELE = f"MissawB/irl-guard-decision-{MODELE}-{VERSION}"
+BASES = {"qwen": "unsloth/Qwen3.5-2B", "laya": "convaiinnovations/laya-multilingual"}"""),
     ("code", """!pip install -q --upgrade unsloth datasets"""),
     ("code", """from google.colab import userdata
 from huggingface_hub import login
@@ -61,8 +62,8 @@ from unsloth import DecisionTrainer
 REPO_CHECKPOINTS = REPO_MODELE + "-checkpoints"
 args = TrainingArguments(
     output_dir="sorties",
-    per_device_train_batch_size=8,
-    gradient_accumulation_steps=4,
+    per_device_train_batch_size=4,   # 2B sur T4 : batch 4 x accumulation 8 = 32, comme en v1
+    gradient_accumulation_steps=8,
     num_train_epochs=2,
     max_steps=MAX_STEPS,
     learning_rate=2e-4,
