@@ -14,6 +14,8 @@ ECE : calibration de la question action (option la plus probable), sur 10 classe
 | laya | 1000 | 38.1 % | 0.303 | 27.6 % | 11.0 % | 36.2 % | 0.281 | 4.31 |
 | laya-ft | 1000 | 91.2 % | 0.909 | 99.0 % | 92.2 % | 2.4 % | 0.078 | 0.34 |
 | qwen-ft | 1000 | 94.6 % | 0.945 | 99.6 % | 94.5 % | 1.8 % | 0.015 | 0.20 |
+| combine-laya | 1000 | 69.2 % | 0.697 | 99.3 % | 70.2 % | 0.9 % | 0.256 | 0.50 |
+| combine-qwen | 1000 | 71.3 % | 0.716 | 99.6 % | 71.2 % | 0.9 % | 0.257 | 0.42 |
 
 ![Fiabilité — Chartes vues](fiabilite_test_vues.png)
 
@@ -27,5 +29,7 @@ ECE : calibration de la question action (option la plus probable), sur 10 classe
 | laya | 1000 | 35.9 % | 0.289 | 24.2 % | 10.3 % | 47.5 % | 0.293 | 5.35 |
 | laya-ft | 1000 | 79.9 % | 0.783 | 98.9 % | 81.8 % | 14.7 % | 0.039 | 1.41 |
 | qwen-ft | 1000 | 84.6 % | 0.831 | 99.5 % | 84.8 % | 13.6 % | 0.067 | 1.19 |
+| combine-laya | 1000 | 67.1 % | 0.676 | 99.1 % | 67.9 % | 3.7 % | 0.220 | 0.85 |
+| combine-qwen | 1000 | 69.7 % | 0.697 | 99.8 % | 69.9 % | 3.7 % | 0.238 | 0.73 |
 
 ![Fiabilité — Chartes non vues](fiabilite_test_non_vues.png)
