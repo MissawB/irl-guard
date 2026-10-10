@@ -92,15 +92,28 @@ trainer.train(resume_from_checkpoint=reprise)"""),
     ("code", """metriques = FastDecisionModel.calibrate(model, tokenizer, eval_items)
 print(metriques)  # précision, ECE et loss sur val"""),
     ("md", """## 4. Publication (dépôts privés)"""),
-    ("code", """from huggingface_hub import HfApi
+    ("code", """import json
+import os
+import shutil
+
+from huggingface_hub import HfApi
 
 api = HfApi()
-model.save_pretrained("lora")
-model.save_pretrained_merged("merged")
-for dossier, repo in (("lora", REPO_MODELE + "-lora"), ("merged", REPO_MODELE)):
+DOSSIER_LORA, DOSSIER_MERGED = f"lora-{MODELE}", f"merged-{MODELE}"
+for dossier in (DOSSIER_LORA, DOSSIER_MERGED):
+    shutil.rmtree(dossier, ignore_errors=True)  # jamais de fichiers d'un entraînement précédent
+model.save_pretrained(DOSSIER_LORA)
+model.save_pretrained_merged(DOSSIER_MERGED)
+
+with open(os.path.join(DOSSIER_MERGED, "config.json"), encoding="utf-8") as f:
+    config = json.load(f)
+attendu = "laya" if MODELE == "laya" else "qwen"
+assert config["model_type"].startswith(attendu), f"config.json inattendu pour {MODELE} : {config['model_type']}"
+
+for dossier, repo in ((DOSSIER_LORA, REPO_MODELE + "-lora"), (DOSSIER_MERGED, REPO_MODELE)):
     api.create_repo(repo, private=True, exist_ok=True)
     api.upload_folder(folder_path=dossier, repo_id=repo)
-    print("Publié :", repo)"""),
+    print("Publié :", repo, sorted(api.list_repo_files(repo)))"""),
     ("md", """## 5. Prédictions sur les jeux de test
 La première réponse brute est affichée : si son format diffère de ce que `vers_api` attend,
 s'arrêter et rapporter cette sortie."""),

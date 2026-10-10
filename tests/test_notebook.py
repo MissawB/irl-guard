@@ -40,3 +40,11 @@ def test_etapes_cles_presentes():
 def test_le_fichier_du_depot_est_a_jour():
     depot = nbformat.read("notebooks/finetune_decision.ipynb", as_version=4)
     assert [c.source for c in depot.cells] == [c.source for c in construire_notebook().cells]
+
+
+def test_sauvegardes_isolees_par_modele():
+    texte = "\n".join(_code(construire_notebook()))
+    assert 'f"lora-{MODELE}"' in texte and 'f"merged-{MODELE}"' in texte
+    assert "shutil.rmtree" in texte
+    assert '"lora"' not in texte and '"merged"' not in texte
+    assert 'config["model_type"]' in texte
