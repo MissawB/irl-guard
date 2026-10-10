@@ -84,3 +84,14 @@ Laya sans fine-tuning ne suit pas une charte écrite (voir `docs/resultats/rappo
    uv run irl-guard evaluer
    ```
 5. **Utiliser le modèle dans IRL Guard** : le servir avec Unsloth Studio (réglage Decision API, ou `UNSLOTH_SYSTEMONE_MODEL=<chemin du modèle fusionné> unsloth studio`), puis renseigner `laya.modele` dans la config.
+
+## Mode combiné et démo en ligne
+
+Par défaut, `irl-guard process` décide en **mode combiné** : les règles et Laya fine-tuné (chargé en local, sur
+CPU) donnent chacun leur décision, et la plus protectrice l'emporte. Pour utiliser Qwen fine-tuné via Unsloth
+Studio, régler `decideur.modele: studio` dans la config. Sur les chartes jamais vues, le mode combiné fait passer
+la fuite de 13,6 % (Qwen seul) à 3,7 %, au prix d'environ 15 points de précision (les règles ignorent la charte).
+
+- Démo : https://huggingface.co/spaces/MissawB/irl-guard-demo
+- Collection « IRL Guard » (dataset et modèles) : https://huggingface.co/collections/MissawB/irl-guard-6ac9ea0b623e8e00170b6ffd
+- Republier les fiches après une nouvelle évaluation : `uv run irl-guard hub publier`
