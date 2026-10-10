@@ -29,3 +29,20 @@ def predire_avec_decider(decider: Decider, lignes: list[dict]) -> dict[str, dict
 def charger_predictions(chemin: str | Path) -> dict[str, dict]:
     with Path(chemin).open(encoding="utf-8") as f:
         return {d["id"]: d["answers"] for d in (json.loads(l) for l in f if l.strip())}
+
+
+def combiner_predictions(regles: dict[str, dict], modele: dict[str, dict], seuils) -> dict[str, dict]:
+    """Réponse la plus protectrice ligne par ligne (règle de `CombinedDecider`).
+
+    Une ligne absente côté modèle est omise : l'évaluation marquera l'approche absente.
+    """
+    from irl_guard.decision.combine import plus_protectrice
+    from irl_guard.evaluation.metriques import action_predite
+    combine = {}
+    for id_, reponse_regle in regles.items():
+        reponse_modele = modele.get(id_)
+        if reponse_modele is None:
+            continue
+        gagnant = plus_protectrice(action_predite(reponse_regle, seuils), action_predite(reponse_modele, seuils))
+        combine[id_] = reponse_modele if gagnant == "modele" else reponse_regle
+    return combine

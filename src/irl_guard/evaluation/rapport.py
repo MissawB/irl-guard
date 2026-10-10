@@ -12,11 +12,14 @@ from irl_guard.decision.base import Decision
 from irl_guard.decision.rules import RulesDecider
 from irl_guard.donnees.lignes import lire_jeu
 from irl_guard.evaluation.metriques import Resultat
-from irl_guard.evaluation.predicteurs import charger_predictions, predire_avec_decider, reponses_depuis_decision
+from irl_guard.evaluation.predicteurs import (
+    charger_predictions, combiner_predictions, predire_avec_decider, reponses_depuis_decision,
+)
 from irl_guard.evaluation.xgb import PredicteurXGBoost
 
 log = logging.getLogger(__name__)
-APPROCHES = ("toujours-diffuser", "regles", "xgboost", "laya", "laya-ft", "qwen-ft")
+APPROCHES = ("toujours-diffuser", "regles", "xgboost", "laya", "laya-ft", "qwen-ft", "combine-laya", "combine-qwen")
+SOURCES_COMBINEES = {"combine-laya": "laya-ft", "combine-qwen": "qwen-ft"}
 SEUIL_REPLIS = 0.05  # au-delà, les réponses de Laya ne mesurent plus Laya mais le repli
 JEUX_TEST = ("test_vues", "test_non_vues")
 TITRES = {"test_vues": "Chartes vues", "test_non_vues": "Chartes non vues"}
@@ -24,6 +27,11 @@ TITRES = {"test_vues": "Chartes vues", "test_non_vues": "Chartes non vues"}
 
 def obtenir_predictions(approche: str, cfg: SessionConfig, dossier_donnees: Path, dossier_predictions: Path,
                         jeux: dict[str, list[dict]]) -> dict[str, dict | None]:
+    if approche in SOURCES_COMBINEES:
+        modele = obtenir_predictions(SOURCES_COMBINEES[approche], cfg, dossier_donnees, dossier_predictions, jeux)
+        regles = obtenir_predictions("regles", cfg, dossier_donnees, dossier_predictions, jeux)
+        return {j: combiner_predictions(regles[j], modele[j], cfg.seuils) if modele[j] is not None else None
+                for j in jeux}
     if approche == "toujours-diffuser":
         reponse = reponses_depuis_decision(Decision("diffuser", "aucun", 0))
         return {j: {l["id"]: reponse for l in lignes} for j, lignes in jeux.items()}

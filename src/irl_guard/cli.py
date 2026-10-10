@@ -132,7 +132,7 @@ def replay(
 def evaluer(
     donnees: Path = typer.Option(Path("data/decision"), "--donnees", exists=True, file_okay=False),
     predictions: Path = typer.Option(Path("data/predictions"), "--predictions"),
-    approches: str = typer.Option("toujours-diffuser,regles,xgboost,laya,laya-ft,qwen-ft", "--approches"),
+    approches: str = typer.Option("toujours-diffuser,regles,xgboost,laya,laya-ft,qwen-ft,combine-laya,combine-qwen", "--approches"),
     config: Path = typer.Option(Path("configs/exemple.yaml"), "--config", exists=True, dir_okay=False),
     sortie: Path = typer.Option(Path("docs/resultats"), "--sortie"),
 ) -> None:
