@@ -187,12 +187,16 @@ def evaluer(
 
 def creer_decider_modele(approche: str, cfg: SessionConfig) -> Decider:
     """Décideur local d'un modèle fine-tuné, pour produire ses prédictions sans Colab."""
-    if approche == "laya-ft":
+    from irl_guard.decision.qwen_local import REPO_QWEN, QwenLocalDecider
+    base, _, version = approche.partition("-ft")
+    version = version.lstrip("-")  # "" pour v1, "v2" pour « laya-ft-v2 »
+    if base == "laya" and not version:
         return LayaLocalDecider(cfg, cfg.decideur.laya_local, revision=cfg.decideur.laya_revision)
-    if approche == "qwen-ft":
-        from irl_guard.decision.qwen_local import QwenLocalDecider
-        return QwenLocalDecider(cfg)
-    raise typer.BadParameter(f"approche inconnue : {approche} (laya-ft ou qwen-ft)")
+    if base == "laya":
+        return LayaLocalDecider(cfg, f"MissawB/irl-guard-decision-laya-{version}")
+    if base == "qwen":
+        return QwenLocalDecider(cfg, repo=f"{REPO_QWEN}-{version}" if version else REPO_QWEN)
+    raise typer.BadParameter(f"approche inconnue : {approche} (laya-ft[-vN] ou qwen-ft[-vN])")
 
 
 @app.command()

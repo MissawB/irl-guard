@@ -27,9 +27,10 @@ def _charger_qwen(repo: str = REPO_QWEN, device: str | None = None) -> Callable[
 
 
 class QwenLocalDecider:
-    def __init__(self, cfg: SessionConfig, chargeur: Callable[[], Callable[[dict], dict]] | None = None):
-        self.cfg = cfg
-        self._chargeur = chargeur or _charger_qwen
+    def __init__(self, cfg: SessionConfig, chargeur: Callable[[], Callable[[dict], dict]] | None = None,
+                 repo: str = REPO_QWEN):
+        self.cfg, self.repo = cfg, repo
+        self._chargeur = chargeur or (lambda: _charger_qwen(repo))
         self._systemone = None
 
     def decide(self, state: dict) -> Decision:

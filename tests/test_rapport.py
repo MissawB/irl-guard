@@ -206,3 +206,9 @@ def test_evaluer_ignore_un_jeu_absent(tmp_path):
 def test_titre_du_jeu_manuscrit():
     from irl_guard.evaluation.rapport import JEUX_TEST, TITRES
     assert "test_manuscrites" in JEUX_TEST and TITRES["test_manuscrites"] == "Chartes écrites à la main"
+
+
+def test_approches_combinees_v2():
+    from irl_guard.evaluation.rapport import SOURCES_COMBINEES
+    assert SOURCES_COMBINEES["combine-qwen-v2"] == "qwen-ft-v2"
+    assert SOURCES_COMBINEES["combine-laya-v2"] == "laya-ft-v2"

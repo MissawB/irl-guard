@@ -14,7 +14,9 @@ DATASET = "MissawB/irl-guard-decisions"
 COLONNES = ("Approche", "Action", "F1 macro", "Fuite", "ECE", "Coût moyen")
 NOMS = {"toujours-diffuser": "Toujours diffuser (plancher)", "regles": "Règles", "xgboost": "XGBoost",
         "laya": "Laya brut", "laya-ft": "Laya fine-tuné", "qwen-ft": "Qwen3.5-0.8B fine-tuné",
-        "combine-laya": "Règles + Laya fine-tuné", "combine-qwen": "Règles + Qwen fine-tuné"}
+        "combine-laya": "Règles + Laya fine-tuné", "combine-qwen": "Règles + Qwen fine-tuné",
+        "laya-ft-v2": "Laya fine-tuné (v2)", "qwen-ft-v2": "Qwen3.5-2B fine-tuné (v2)",
+        "combine-laya-v2": "Règles + Laya v2", "combine-qwen-v2": "Règles + Qwen v2"}
 LIMITES = """## Limites
 
 - Les chartes « non vues » sont des formulations et des combinaisons de clauses absentes de l'entraînement, mais

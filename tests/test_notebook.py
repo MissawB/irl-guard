@@ -47,7 +47,7 @@ def test_sauvegardes_isolees_par_modele():
     assert 'f"lora-{MODELE}"' in texte and 'f"merged-{MODELE}"' in texte
     assert "shutil.rmtree" in texte
     assert '"lora"' not in texte and '"merged"' not in texte
-    assert 'config["model_type"]' in texte
+    assert "rl_agent_config.json" in texte
 
 
 def test_version_2_et_qwen_2b():

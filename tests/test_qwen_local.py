@@ -28,3 +28,14 @@ def test_erreur_donne_repli():
         raise RuntimeError("CUDA out of memory")
 
     assert QwenLocalDecider(CFG, chargeur=lambda: systemone).decide(STATE).source == "fallback"
+
+
+def test_creer_decider_modele_selon_la_version(monkeypatch):
+    from irl_guard import cli
+    from irl_guard.decision import laya_local, qwen_local
+    v2 = cli.creer_decider_modele("qwen-ft-v2", CFG)
+    assert isinstance(v2, QwenLocalDecider) and v2.repo == "MissawB/irl-guard-decision-qwen-v2"
+    assert cli.creer_decider_modele("qwen-ft", CFG).repo == "MissawB/irl-guard-decision-qwen"
+    laya_v2 = cli.creer_decider_modele("laya-ft-v2", CFG)
+    assert isinstance(laya_v2, laya_local.LayaLocalDecider) and laya_v2.modele == "MissawB/irl-guard-decision-laya-v2"
+    assert cli.creer_decider_modele("laya-ft", CFG).modele == "MissawB/irl-guard-decision-laya"

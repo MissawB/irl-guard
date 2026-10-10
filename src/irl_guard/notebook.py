@@ -103,15 +103,23 @@ api = HfApi()
 DOSSIER_LORA, DOSSIER_MERGED = f"lora-{MODELE}", f"merged-{MODELE}"
 for dossier in (DOSSIER_LORA, DOSSIER_MERGED):
     shutil.rmtree(dossier, ignore_errors=True)  # jamais de fichiers d'un entraînement précédent
-model.save_pretrained(DOSSIER_LORA)
+sauvegardes = [(DOSSIER_MERGED, REPO_MODELE)]
+if hasattr(model, "save_pretrained"):  # Laya n'a pas d'adaptateurs LoRA séparés, seulement le modèle fusionné
+    model.save_pretrained(DOSSIER_LORA)
+    sauvegardes.append((DOSSIER_LORA, REPO_MODELE + "-lora"))
 model.save_pretrained_merged(DOSSIER_MERGED)
 
-with open(os.path.join(DOSSIER_MERGED, "config.json"), encoding="utf-8") as f:
-    config = json.load(f)
-attendu = "laya" if MODELE == "laya" else "qwen"
-assert config["model_type"].startswith(attendu), f"config.json inattendu pour {MODELE} : {config['model_type']}"
+fichiers = set(os.listdir(DOSSIER_MERGED))
+if MODELE == "laya":  # Laya fusionné : rl_agent_config.json, encoder/, tokenizer/ (pas de config.json)
+    assert "rl_agent_config.json" in fichiers and not any(f.startswith("model.safetensors-") for f in fichiers)
+    with open(os.path.join(DOSSIER_MERGED, "config.json"), "w", encoding="utf-8") as f:
+        json.dump({"model_type": "laya", "architectures": ["LayaTypedDecisions"]}, f, indent=1)
+else:
+    with open(os.path.join(DOSSIER_MERGED, "config.json"), encoding="utf-8") as f:
+        config = json.load(f)
+    assert config["model_type"].startswith("qwen"), f"config.json inattendu : {config['model_type']}"
 
-for dossier, repo in ((DOSSIER_LORA, REPO_MODELE + "-lora"), (DOSSIER_MERGED, REPO_MODELE)):
+for dossier, repo in sauvegardes:
     api.create_repo(repo, private=True, exist_ok=True)
     api.upload_folder(folder_path=dossier, repo_id=repo)
     print("Publié :", repo, sorted(api.list_repo_files(repo)))"""),

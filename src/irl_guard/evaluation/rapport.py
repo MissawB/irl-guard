@@ -19,7 +19,8 @@ from irl_guard.evaluation.xgb import PredicteurXGBoost
 
 log = logging.getLogger(__name__)
 APPROCHES = ("toujours-diffuser", "regles", "xgboost", "laya", "laya-ft", "qwen-ft", "combine-laya", "combine-qwen")
-SOURCES_COMBINEES = {"combine-laya": "laya-ft", "combine-qwen": "qwen-ft"}
+SOURCES_COMBINEES = {"combine-laya": "laya-ft", "combine-qwen": "qwen-ft",
+                     "combine-laya-v2": "laya-ft-v2", "combine-qwen-v2": "qwen-ft-v2"}
 SEUIL_REPLIS = 0.05  # au-delà, les réponses de Laya ne mesurent plus Laya mais le repli
 JEUX_TEST = ("test_vues", "test_non_vues", "test_manuscrites")
 TITRES = {"test_vues": "Chartes vues", "test_non_vues": "Chartes non vues",
