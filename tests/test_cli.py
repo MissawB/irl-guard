@@ -66,6 +66,51 @@ def test_replay_refuse_d_ecraser_le_journal(make_video, tmp_path):
 def test_laya_injoignable(make_video, tmp_path):
     entree = make_video(n=5)
     config = _config(tmp_path, laya={"url": "http://127.0.0.1:9", "timeout_s": 0.5})
-    r = runner.invoke(cli.app, ["process", str(entree), "--config", str(config), "--out", str(tmp_path / "o.mp4")])
+    r = runner.invoke(cli.app, ["process", str(entree), "--config", str(config), "--out", str(tmp_path / "o.mp4"),
+                                "--decider", "laya"])
     assert r.exit_code == 2
     assert "--decider rules" in r.output
+
+
+class FauxAgentLaya:
+    def predict(self, state, questions):
+        return {"answers": {
+            "action": {"probabilities": {"diffuser": 0.9, "flouter": 0.05, "pause": 0.05}},
+            "risque": {"probabilities": {"localisation": 0.2, "donnee_perso": 0.2, "arme": 0.2,
+                                         "propos": 0.2, "aucun": 0.2}},
+            "gravite": {"score": 0, "probabilities": {"0": 1.0, "1": 0, "2": 0, "3": 0}},
+        }}
+
+
+def test_combine_est_le_defaut_et_garde_la_regle(make_video, tmp_path, monkeypatch):
+    import json
+
+    from irl_guard.decision import laya_local
+    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele: FauxAgentLaya())
+    monkeypatch.setattr(cli, "construire_perception", lambda cfg: TexteFixe())
+    entree = make_video(n=10, fps=10.0, size=(640, 240), draw=_dessiner)
+    r = runner.invoke(cli.app, ["process", str(entree), "--config", str(_config(tmp_path)),
+                                "--out", str(tmp_path / "out.mp4")])
+    assert r.exit_code == 0, r.output
+    lignes = (tmp_path / "out.jsonl").read_text(encoding="utf-8").splitlines()
+    appel = json.loads(lignes[0])["analyse"]["appels"][0]
+    # Le modèle factice diffuse, la règle floute « Rue Nationale » : la règle l'emporte.
+    assert appel["decision"]["action"] == "flouter"
+    assert appel["decision"]["source"] == "combine:rules"
+
+
+def test_laya_local_seul(make_video, tmp_path, monkeypatch):
+    from irl_guard.decision import laya_local
+    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele: FauxAgentLaya())
+    monkeypatch.setattr(cli, "construire_perception", lambda cfg: TexteFixe())
+    entree = make_video(n=5, fps=10.0, size=(640, 240), draw=_dessiner)
+    r = runner.invoke(cli.app, ["process", str(entree), "--config", str(_config(tmp_path)),
+                                "--out", str(tmp_path / "out.mp4"), "--decider", "laya-local"])
+    assert r.exit_code == 0, r.output
+
+
+def test_config_decideur_par_defaut():
+    from irl_guard.config import SessionConfig
+    cfg = SessionConfig(charte="x")
+    assert cfg.decideur.modele == "laya-local"
+    assert cfg.decideur.laya_local == "MissawB/irl-guard-decision-laya"

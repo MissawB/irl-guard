@@ -10,7 +10,9 @@ import typer
 
 from irl_guard.config import SessionConfig, load_config
 from irl_guard.decision.base import Decider
+from irl_guard.decision.combine import CombinedDecider
 from irl_guard.decision.laya import LayaDecider, LayaIndisponible
+from irl_guard.decision.laya_local import LayaLocalDecider
 from irl_guard.decision.rules import RulesDecider
 from irl_guard.journal import lire_detections
 from irl_guard.perception.base import CachedPerception, DetecteurIndisponible, JournalIncompatible
@@ -50,16 +52,25 @@ def donnees_publier(
 
 
 class ChoixDecider(str, Enum):
-    laya = "laya"
     rules = "rules"
+    laya = "laya"
+    laya_local = "laya-local"
+    combine = "combine"
 
 
 def creer_decider(choix: ChoixDecider, cfg: SessionConfig) -> Decider:
     if choix == ChoixDecider.rules:
         return RulesDecider(cfg)
-    decider = LayaDecider(cfg)
-    decider.verifier()
-    return decider
+    if choix == ChoixDecider.laya:
+        decider = LayaDecider(cfg)
+        decider.verifier()
+        return decider
+    if choix == ChoixDecider.laya_local:
+        decider = LayaLocalDecider(cfg, cfg.decideur.laya_local)
+        decider.verifier()
+        return decider
+    modele = ChoixDecider.laya if cfg.decideur.modele == "studio" else ChoixDecider.laya_local
+    return CombinedDecider(RulesDecider(cfg), creer_decider(modele, cfg))
 
 
 def _executer(entree: Path, out: Path, config: Path, debug_overlay: bool, choix: ChoixDecider,
@@ -94,7 +105,7 @@ def process(
     config: Path = typer.Option(..., "--config", exists=True, dir_okay=False, help="YAML de session"),
     out: Path = typer.Option(..., "--out", help="Vidéo protégée en sortie"),
     debug_overlay: bool = typer.Option(False, "--debug-overlay", help="Produit aussi <out>_debug.mp4"),
-    decider: ChoixDecider = typer.Option(ChoixDecider.laya, "--decider"),
+    decider: ChoixDecider = typer.Option(ChoixDecider.combine, "--decider"),
 ) -> None:
     """Analyse une vidéo et produit sa version protégée."""
     _executer(entree, out, config, debug_overlay, decider, construire_perception)
@@ -107,7 +118,7 @@ def replay(
     config: Path = typer.Option(..., "--config", exists=True, dir_okay=False),
     out: Path = typer.Option(..., "--out"),
     debug_overlay: bool = typer.Option(False, "--debug-overlay"),
-    decider: ChoixDecider = typer.Option(ChoixDecider.laya, "--decider"),
+    decider: ChoixDecider = typer.Option(ChoixDecider.combine, "--decider"),
 ) -> None:
     """Rejoue une analyse avec d'autres réglages, sans refaire la perception."""
     if out.with_suffix(".jsonl").resolve() == journal.resolve():

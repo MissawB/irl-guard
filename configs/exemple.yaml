@@ -26,3 +26,7 @@ laya:
 regles:
   categories_couteau_ok: [cuisine]
   mots_offensants: []
+
+decideur:
+  modele: laya-local          # laya-local (CPU, sans serveur) ou studio (Unsloth Studio, voir laya:)
+  laya_local: MissawB/irl-guard-decision-laya

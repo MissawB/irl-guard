@@ -63,6 +63,11 @@ class DetecteursConfig(_Strict):
     device: str | None = None
 
 
+class DecideurConfig(_Strict):
+    modele: Literal["laya-local", "studio"] = "laya-local"
+    laya_local: str = "MissawB/irl-guard-decision-laya"
+
+
 def _couts_par_defaut() -> dict[str, dict[str, float]]:
     # couts[action prédite][action attendue]
     return {
@@ -90,6 +95,7 @@ class SessionConfig(_Strict):
     budget_tokens_state: int = Field(700, ge=100)
     ecran_pause: Path | None = None
     laya: LayaConfig = Field(default_factory=LayaConfig)
+    decideur: DecideurConfig = Field(default_factory=DecideurConfig)
     regles: ReglesConfig = Field(default_factory=ReglesConfig)
     detecteurs: DetecteursConfig = Field(default_factory=DetecteursConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
