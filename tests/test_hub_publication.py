@@ -57,6 +57,8 @@ def test_sans_public_rien_ne_devient_public(tmp_path):
     assert "update_repo_settings" not in api.noms() and "create_collection" not in api.noms()
     creation_space = [a for a in api.appels if a[0] == "create_repo"][0]
     assert creation_space[2]["private"] is True
+    # Un compte gratuit ne peut pas créer de Space Gradio sur CPU (402) : il est créé directement sur ZeroGPU.
+    assert creation_space[2]["space_hardware"] == "zero-a10g"
     assert ("request_space_hardware", (publication.SPACE, "zero-a10g"), {}) in api.appels
 
 

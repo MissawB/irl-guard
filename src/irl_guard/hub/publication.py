@@ -63,7 +63,8 @@ def publier(api, construits: dict[str, Path], public: bool) -> list[str]:
         api.upload_file(path_or_fileobj=str(construits[repo]), path_in_repo="README.md", repo_id=repo,
                         repo_type=repo_type, commit_message="Fiche IRL Guard")
         journal.append(f"fiche envoyée : {repo}")
-    api.create_repo(SPACE, repo_type="space", space_sdk="gradio", private=True, exist_ok=True)
+    api.create_repo(SPACE, repo_type="space", space_sdk="gradio", private=True, exist_ok=True,
+                    space_hardware="zero-a10g")  # sur CPU gratuit, un compte non PRO reçoit une 402
     api.upload_folder(folder_path=str(construits[SPACE]), repo_id=SPACE, repo_type="space",
                       commit_message="Space IRL Guard")
     api.request_space_hardware(SPACE, "zero-a10g")
