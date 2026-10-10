@@ -99,3 +99,10 @@ def test_exception_du_decideur_donne_repli():
     a = an.analyser(0, [_texte()])
     assert a.pistes[0].action == "flouter"
     assert a.pistes[0].decision.source == "fallback"
+
+
+def test_repli_dans_le_mode_combine_non_mis_en_cache():
+    an, fake = _analyzer(Decision("flouter", "localisation", 2, {}, "combine:rules+fallback"))
+    for i in range(3):
+        an.analyser(i, [_texte()])
+    assert len(fake.states) == 3

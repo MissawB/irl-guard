@@ -58,3 +58,25 @@ def test_app_syntaxe_et_readme():
     exigences = Path("space/requirements.txt").read_text(encoding="utf-8")
     for paquet in ("gradio", "spaces", "laya", "transformers", "torchvision", "accelerate", "pydantic"):
         assert paquet in exigences
+
+
+class Plante:
+    def decide(self, state):
+        raise RuntimeError("GPU indisponible")
+
+
+def test_une_approche_en_erreur_n_efface_pas_les_autres():
+    regles = RulesDecider(SessionConfig(charte="x"))
+    state = logique.construire_state("x", "IRL", False, "texte", "Rue Nationale", "", "grande")
+    lignes = logique.decider_tout(state, regles, Fixe("pause"), Plante())
+    assert lignes[0][1] == "flouter" and lignes[1][1] == "pause"
+    assert ["Qwen fine-tuné", "erreur", "", "", ""] in lignes
+
+
+def test_repli_affiche_comme_tel():
+    from irl_guard.decision.base import decision_repli
+    assert logique.ligne("Laya", decision_repli())[2] == "repli (erreur du modèle)"
+
+
+def test_laya_charge_au_demarrage_du_space():
+    assert "LAYA._agent_charge()" in Path("space/app.py").read_text(encoding="utf-8")

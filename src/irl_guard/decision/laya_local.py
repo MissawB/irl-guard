@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import replace
+from functools import partial
 
 from irl_guard.config import SessionConfig
 from irl_guard.decision.base import QUESTIONS, Decision, decision_repli
@@ -13,15 +14,16 @@ from irl_guard.decision.laya import LayaIndisponible, parser_reponse
 log = logging.getLogger(__name__)
 
 
-def _charger_laya(modele: str):
+def _charger_laya(modele: str, revision: str | None = None):
     import laya
-    return laya.load(modele)
+    return laya.load(modele, device="cpu", revision=revision)
 
 
 class LayaLocalDecider:
-    def __init__(self, cfg: SessionConfig, modele: str, chargeur: Callable[[str], object] | None = None):
+    def __init__(self, cfg: SessionConfig, modele: str, chargeur: Callable[[str], object] | None = None,
+                 revision: str | None = None):
         self.cfg, self.modele = cfg, modele
-        self._chargeur = chargeur or _charger_laya
+        self._chargeur = chargeur or partial(_charger_laya, revision=revision)
         self._agent = None
 
     def _agent_charge(self):

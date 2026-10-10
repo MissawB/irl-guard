@@ -92,6 +92,10 @@ CPU) donnent chacun leur décision, et la plus protectrice l'emporte. Pour utili
 Studio, régler `decideur.modele: studio` dans la config. Sur les chartes jamais vues, le mode combiné fait passer
 la fuite de 13,6 % (Qwen seul) à 3,7 %, au prix d'environ 15 points de précision (les règles ignorent la charte).
 
+Au premier lancement, le mode combiné télécharge Laya fine-tuné (~680 Mo), à une version figée
+(`decideur.laya_revision`). Ensuite, il fonctionne hors ligne avec `HF_HUB_OFFLINE=1`. Sans connexion ni cache,
+`irl-guard process` s'arrête avec un message (relancer avec `--decider rules`).
+
 - Démo : https://huggingface.co/spaces/MissawB/irl-guard-demo
 - Collection « IRL Guard » (dataset et modèles) : https://huggingface.co/collections/MissawB/irl-guard-6ac9ea0b623e8e00170b6ffd
 - Republier les fiches après une nouvelle évaluation : `uv run irl-guard hub publier`

@@ -39,20 +39,32 @@ def construire_state(charte: str, categorie: str, mode_domicile: bool, type_cibl
 
 
 def ligne(nom: str, decision: Decision) -> list[str]:
-    p = decision.probabilites.get("action") or {}
-    probas = " / ".join(f"{p.get(a, 0):.2f}" for a in ("diffuser", "flouter", "pause")) if p else "règle"
+    if "fallback" in decision.source:
+        probas = "repli (erreur du modèle)"
+    else:
+        p = decision.probabilites.get("action") or {}
+        probas = " / ".join(f"{p.get(a, 0):.2f}" for a in ("diffuser", "flouter", "pause")) if p else "règle"
     return [nom, decision.action, probas, decision.risque, str(decision.gravite)]
 
 
+def _ligne_sure(nom: str, decider, state: dict) -> list[str]:
+    """Une approche en erreur donne une ligne « erreur » sans effacer les autres."""
+    try:
+        return ligne(nom, decider.decide(state))
+    except Exception as e:
+        log.warning("%s en erreur : %s", nom, e)
+        return [nom, "erreur", "", "", ""]
+
+
 def decider_tout(state: dict, regles, laya, qwen) -> list[list[str]]:
-    lignes = [ligne("Règles", regles.decide(state)),
-              ligne("Laya fine-tuné", laya.decide(state)),
-              ligne("Règles + Laya", CombinedDecider(regles, laya).decide(state))]
+    lignes = [_ligne_sure("Règles", regles, state),
+              _ligne_sure("Laya fine-tuné", laya, state),
+              _ligne_sure("Règles + Laya", CombinedDecider(regles, laya), state)]
     if qwen is None:
         lignes.append(["Qwen fine-tuné", "indisponible en ligne", "", "", ""])
     else:
-        lignes += [ligne("Qwen fine-tuné", qwen.decide(state)),
-                   ligne("Règles + Qwen", CombinedDecider(regles, qwen).decide(state))]
+        lignes += [_ligne_sure("Qwen fine-tuné", qwen, state),
+                   _ligne_sure("Règles + Qwen", CombinedDecider(regles, qwen), state)]
     return lignes
 
 

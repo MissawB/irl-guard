@@ -91,7 +91,7 @@ def creer_decider(choix: ChoixDecider, cfg: SessionConfig) -> Decider:
         decider.verifier()
         return decider
     if choix == ChoixDecider.laya_local:
-        decider = LayaLocalDecider(cfg, cfg.decideur.laya_local)
+        decider = LayaLocalDecider(cfg, cfg.decideur.laya_local, revision=cfg.decideur.laya_revision)
         decider.verifier()
         return decider
     modele = ChoixDecider.laya if cfg.decideur.modele == "studio" else ChoixDecider.laya_local

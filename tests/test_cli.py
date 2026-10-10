@@ -86,7 +86,7 @@ def test_combine_est_le_defaut_et_garde_la_regle(make_video, tmp_path, monkeypat
     import json
 
     from irl_guard.decision import laya_local
-    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele: FauxAgentLaya())
+    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele, revision=None: FauxAgentLaya())
     monkeypatch.setattr(cli, "construire_perception", lambda cfg: TexteFixe())
     entree = make_video(n=10, fps=10.0, size=(640, 240), draw=_dessiner)
     r = runner.invoke(cli.app, ["process", str(entree), "--config", str(_config(tmp_path)),
@@ -101,7 +101,7 @@ def test_combine_est_le_defaut_et_garde_la_regle(make_video, tmp_path, monkeypat
 
 def test_laya_local_seul(make_video, tmp_path, monkeypatch):
     from irl_guard.decision import laya_local
-    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele: FauxAgentLaya())
+    monkeypatch.setattr(laya_local, "_charger_laya", lambda modele, revision=None: FauxAgentLaya())
     monkeypatch.setattr(cli, "construire_perception", lambda cfg: TexteFixe())
     entree = make_video(n=5, fps=10.0, size=(640, 240), draw=_dessiner)
     r = runner.invoke(cli.app, ["process", str(entree), "--config", str(_config(tmp_path)),

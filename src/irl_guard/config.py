@@ -66,6 +66,8 @@ class DetecteursConfig(_Strict):
 class DecideurConfig(_Strict):
     modele: Literal["laya-local", "studio"] = "laya-local"
     laya_local: str = "MissawB/irl-guard-decision-laya"
+    # Version figée : un envoi erroné sur le dépôt ne doit pas changer en silence le comportement du bloqueur.
+    laya_revision: str | None = "b7a9c6eaecd86782bcc101b27525041cbb662161"
 
 
 def _couts_par_defaut() -> dict[str, dict[str, float]]:

@@ -20,8 +20,12 @@ class CombinedDecider:
         regle = self.regles.decide(state)
         modele = self.modele.decide(state)
         if modele.source == "fallback":
-            # Le repli vaut « flouter » : il ne peut que relever une règle qui diffuserait.
-            gagnant = modele if regle.action == "diffuser" else regle
-        else:
-            gagnant = modele if plus_protectrice(regle.action, modele.action) == "modele" else regle
+            # Le repli vaut « flouter » : il ne peut que relever une règle qui diffuserait. La source garde la
+            # trace du repli pour que l'Analyzer ne le mette pas en cache (le modèle sera réessayé).
+            if regle.action == "diffuser":
+                return replace(modele, source="combine:fallback")
+            return replace(regle, source=f"combine:{regle.source}+fallback")
+        gagnant = modele if plus_protectrice(regle.action, modele.action) == "modele" else regle
+        if regle.action == modele.action and regle.p_pause > modele.p_pause:
+            gagnant = regle  # à égalité, ne jamais affaiblir le score de pause (hystérésis)
         return replace(gagnant, source=f"combine:{gagnant.source}")

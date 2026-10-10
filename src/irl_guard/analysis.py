@@ -92,6 +92,6 @@ class Analyzer:
             log.warning("Décideur en erreur, piste floutée par défaut : %s", e)
             decision = decision_repli()
         appels.append({"piste": piste.id, "state": state, "decision": decision.to_dict()})
-        if decision.source != "fallback":
+        if "fallback" not in decision.source:  # repli seul ou dans le mode combiné : réessayer
             self._cache[cle] = decision
         return decision

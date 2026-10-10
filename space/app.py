@@ -17,7 +17,8 @@ import logique
 
 CFG = SessionConfig(charte="x")
 REGLES = RulesDecider(CFG)
-LAYA = LayaLocalDecider(CFG, logique.REPO_LAYA)
+LAYA = LayaLocalDecider(CFG, logique.REPO_LAYA, revision=CFG.decideur.laya_revision)
+LAYA._agent_charge()  # chargé au démarrage, sur CPU : pas pendant le créneau ZeroGPU d'un visiteur
 QWEN = logique.charger_qwen(CFG, device="cuda")
 SCORES = ("Sur les chartes **jamais vues** du jeu de test : Qwen fine-tuné 84,6 % de précision, Laya fine-tuné "
           "79,9 %, XGBoost 45,5 %, Laya brut 35,9 % — voir les fiches des modèles.")

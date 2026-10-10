@@ -74,3 +74,20 @@ def test_vrai_modele_depuis_le_hub():
         {**STATE, "charte": "Floute les insultes.", "cible": {**STATE["cible"], "texte": "Sale connard"},
          "mode_domicile": False})
     assert d.source == "laya-local" and d.action in ("flouter", "pause")
+
+
+def test_chargement_par_defaut_sur_cpu_a_une_version_figee(monkeypatch):
+    import sys
+    import types
+
+    appels = {}
+    faux = types.ModuleType("laya")
+    faux.load = lambda modele, **kw: appels.update(modele=modele, **kw) or FauxAgent()
+    monkeypatch.setitem(sys.modules, "laya", faux)
+    LayaLocalDecider(CFG, "MissawB/x", revision="abc123").decide(STATE)
+    assert appels == {"modele": "MissawB/x", "device": "cpu", "revision": "abc123"}
+
+
+def test_config_fige_la_version_du_modele_par_defaut():
+    import re
+    assert re.fullmatch(r"[0-9a-f]{40}", CFG.decideur.laya_revision)
