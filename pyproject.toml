@@ -3,6 +3,7 @@ name = "irl-guard"
 version = "0.1.0"
 description = "Bloqueur de contenu pour lives IRL : YOLO + OCR + decision model"
 requires-python = ">=3.12,<3.13"
+license = "Apache-2.0"
 dependencies = [
     "numpy>=1.26",
     "opencv-python>=4.10",

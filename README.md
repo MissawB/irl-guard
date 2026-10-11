@@ -180,3 +180,7 @@ Le document de vision initial est
   L'audio n'est pas analysé.
 - **En mode combiné, les règles ignorent les autorisations de la charte**, d'où environ 7 points de précision perdus
   pour une fuite divisée par 5.
+
+## Licence
+
+[Apache-2.0](LICENSE), comme les modèles et le Space publiés sur Hugging Face.
